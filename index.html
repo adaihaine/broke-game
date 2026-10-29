@@ -1,0 +1,399 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><title>BROKE! V3.3</title><style>
+:root{font-family:system-ui,-apple-system,sans-serif;color:#f5f5f7;background:#10131b}*{box-sizing:border-box}body{margin:0}header{display:flex;align-items:center;justify-content:space-between;padding:12px 15px;background:#1b2030}h1{margin:0;font-size:24px;letter-spacing:2px;color:#f9d45c}button,select,input{font:inherit}button{border:0;border-radius:11px;background:#f9d45c;color:#161616;font-weight:800;padding:12px 16px;cursor:pointer}button:disabled{opacity:.45}button.secondary{background:#30384d;color:white}.setup{padding:18px;max-width:550px;margin:auto}.setup label{display:block;margin:14px 0}.setup select{width:100%;padding:12px;background:#242b3c;color:white;border:1px solid #525a6c;border-radius:10px}.hidden{display:none!important}.hud{display:flex;gap:7px;padding:9px;overflow:auto}.player{border:2px solid #40485c;border-radius:12px;padding:8px;min-width:120px;background:#1b2030;font-size:12px}.player.active{border-color:#f9d45c}.player strong{display:block;font-size:14px}.game{padding:5px;max-width:850px;margin:auto}.board{position:relative;display:grid;grid-template-columns:repeat(9,minmax(0,1fr));grid-template-rows:repeat(9,minmax(0,1fr));aspect-ratio:1;gap:2px;background:#30384d;padding:3px;border-radius:10px}.cell{position:relative;min-width:0;background:#252c3b;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;border-top:5px solid var(--family,#444e61);padding:1px}.cell.special{background:var(--special,#30384d)}.cell .idx{position:absolute;top:1px;left:2px;font-size:8px;opacity:.65}.cell .name{font-size:clamp(5px,1.28vw,11px);line-height:1.05;font-weight:750;overflow-wrap:anywhere}.cell .price{font-size:clamp(5px,1.1vw,10px);color:#d8deeb;font-weight:700}.cell .cost{font-size:clamp(5px,1.1vw,10px);opacity:1;color:#ffe37b;font-weight:900}.cell .owner{position:absolute;right:1px;top:0;font-size:10px}.tokens{display:flex;gap:1px;position:absolute;bottom:1px;left:1px}.token{width:9px;height:9px;border-radius:50%;border:1px solid white}.center{grid-column:2/9;grid-row:2/9;background:radial-gradient(circle at 50% 30%,#303b57,#141925);border-radius:10px;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:8px;text-align:center;min-width:0}.logo{font-size:clamp(24px,8vw,70px);font-weight:1000;color:#f9d45c;letter-spacing:2px}.sub{font-size:12px;opacity:.7}.message{margin:8px 0;max-width:400px;font-size:clamp(12px,2.5vw,17px);min-height:50px}.actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:center}.actions button{font-size:13px;padding:10px}.log{padding:10px;margin:8px 4px;background:#1b2030;border-radius:10px;max-height:110px;overflow:auto;font-size:12px;color:#c5cede}.modalwrap{position:fixed;inset:0;background:#000b;display:flex;justify-content:center;align-items:center;padding:16px;z-index:9}.modal{background:#242c3e;border:1px solid #59647b;border-radius:18px;padding:20px;max-width:430px;width:100%;max-height:85vh;overflow:auto}.modal h2{margin-top:0;color:#f9d45c}.modal .actions{margin-top:15px}.modal button{flex:1}.hint{font-size:12px;opacity:.7} @media(min-width:700px){.cell .name{font-size:12px}.cell .price{font-size:clamp(5px,1.1vw,10px);color:#d8deeb;font-weight:700}.cell .cost,.cell .price{font-size:11px}.token{width:13px;height:13px}}
+.deal-peek{position:fixed;z-index:11;top:calc(50% - 230px);right:18px;background:#f9d45c;color:#151a27;box-shadow:0 3px 20px #0009;font-size:12px;padding:10px;max-width:130px}.peekreturn{position:fixed;z-index:12;bottom:18px;left:50%;transform:translateX(-50%);box-shadow:0 5px 30px #000b;white-space:nowrap}
+.dice-stage{position:absolute;inset:0;z-index:7;display:flex;align-items:center;justify-content:center;pointer-events:none;background:#0a10215c;border-radius:10px;perspective:650px}.dice-cube{position:relative;width:76px;height:76px;transform-style:preserve-3d;filter:drop-shadow(0 12px 12px #0009)}.dice-cube.rolling{animation:dice-tumble 1.45s cubic-bezier(.15,.65,.25,1) both}.dice-face{position:absolute;inset:0;background:linear-gradient(135deg,#fff,#dfe5ee);border:2px solid #c5cbd5;border-radius:13px;display:grid;place-items:center;font-size:49px;font-weight:900;color:#182035;backface-visibility:hidden}.dice-face:nth-child(1){transform:translateZ(38px)}.dice-face:nth-child(2){transform:rotateY(90deg) translateZ(38px)}.dice-face:nth-child(3){transform:rotateX(90deg) translateZ(38px)}.dice-face:nth-child(4){transform:rotateX(-90deg) translateZ(38px)}.dice-face:nth-child(5){transform:rotateY(-90deg) translateZ(38px)}.dice-face:nth-child(6){transform:rotateY(180deg) translateZ(38px)}@keyframes dice-tumble{0%{transform:translate(-90px,-85px) rotateX(0) rotateY(0) scale(.55)}22%{transform:translate(42px,-30px) rotateX(390deg) rotateY(240deg) scale(1.12)}47%{transform:translate(-26px,12px) rotateX(780deg) rotateY(620deg) scale(.86)}70%{transform:translate(12px,-24px) rotateX(1090deg) rotateY(900deg) scale(1.06)}88%{transform:translate(0,0) rotateX(1360deg) rotateY(1150deg) scale(.94)}100%{transform:translate(0,0) rotateX(1440deg) rotateY(1440deg) scale(1)}}.dice-result{position:absolute;top:calc(50% + 58px);font-weight:900;color:#f9d45c;font-size:19px;text-shadow:0 2px 5px #000}.dice-stage.settled .dice-cube{transform:none;animation:none}.dice-stage.settled .dice-face{display:none}.dice-stage.settled .dice-face:nth-child(1){display:grid}
+.cell.moving-here{outline:3px solid #ffdc62;outline-offset:-3px;box-shadow:inset 0 0 18px #ffdc6277;z-index:2;animation:cell-pulse .38s ease-in-out}@keyframes cell-pulse{50%{filter:brightness(1.8);transform:scale(1.06)}}.token.current-moving{width:14px;height:14px;border:2px solid white;box-shadow:0 0 10px 4px currentColor;animation:token-hop .38s ease-in-out}@keyframes token-hop{50%{transform:scale(1.55) translateY(-3px)}}#sound-toggle{font-size:12px;padding:9px;background:#30384d;color:white}#move-progress{font-weight:900;color:#f9d45c;font-size:14px;min-height:20px}
+.player{flex:1;min-width:145px;padding:9px 8px}.hud{flex-wrap:wrap}.player-finances{margin-top:5px;display:grid;gap:3px;font-size:clamp(10px,2.8vw,13px);line-height:1.3}.player-finances b{font-weight:800}.player-total{color:#f9d45c;border-top:1px solid #485064;padding-top:4px;margin-top:2px}.player-status{font-size:10px;color:#bfc7d8;margin-top:5px}.game{padding-bottom:16px}.cell.owned-clickable{cursor:pointer}.cell.upgraded{box-shadow:inset 0 0 0 2px #ffe37b}.deal-peek{top:auto;bottom:16px;right:16px;min-width:160px}.peekreturn{bottom:16px;left:auto;right:16px;transform:none;min-width:160px}.property-tools button{font-size:11px}.cell .upgrade-label{color:#ffe37b;font-size:9px}#timerlabel{margin:4px 0;color:#ffe37b}
+
+.sub .jackpot{margin-top:5px;color:#f9d45c;font-weight:800;opacity:1}.casino-label{display:block;margin:14px 0}.casino-label input{width:100%;background:#111827;border:1px solid #67738c;border-radius:9px;color:#fff;padding:11px;margin-top:7px}.casino-bet.red{background:#ed5668;color:white}.casino-bet.black{background:#121722;color:white;border:1px solid #77839b}.casino-bet.green{background:#35a775;color:white}.casino-spin{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:15px;background:#111827df;color:#ffdc62;font-weight:900;font-size:18px}.roulette-wheel{font-size:80px;animation:casino-roll 1.6s ease-out both}@keyframes casino-roll{0%{transform:rotate(0deg) scale(.6)}75%{transform:rotate(1000deg) scale(1.15)}100%{transform:rotate(1140deg) scale(1)}}
+ 
+.cell.special{border-top:0!important;border-radius:6px}
+.cell.special .name{display:flex;flex-direction:column;align-items:center;gap:2px;font-weight:850;color:#fff}
+.cell.special .name::first-line{font-size:clamp(10px,2.8vw,20px)}
+.cell.owned-clickable{cursor:pointer;touch-action:manipulation}
+.cell.owned-clickable:focus-visible{outline:2px solid #f9d45c;outline-offset:-2px}
+.property-sheet{display:grid;gap:10px}
+.property-family{font-size:12px;color:#bac6dc;margin-bottom:4px}
+.property-info{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #475167;padding:7px 0;font-size:13px}
+.property-info span{color:#c5cede}.property-info strong{text-align:right}
+.property-tip{font-size:12px;color:#c5cede;margin:8px 0 0}
+
+.property-dock{display:flex;justify-content:center;align-items:center;padding:22px 12px 30px;min-height:95px}
+.property-dock button{width:min(100%,380px);font-size:15px;padding:15px}
+.cash-line{position:relative;white-space:nowrap}.cash-effect{position:absolute;left:52%;bottom:100%;font-weight:900;font-size:15px;pointer-events:none;opacity:0;transform:translateY(4px);z-index:8;text-shadow:0 2px 6px #000}
+.cash-effect.visible{animation:cash-pop 1.15s ease-out forwards}.cash-effect.positive{color:#a7e76b}.cash-effect.negative{color:#ff6179}
+@keyframes cash-pop{0%{opacity:0;transform:translateY(9px) scale(.85)}15%{opacity:1;transform:translateY(-3px) scale(1.1)}75%{opacity:1;transform:translateY(-14px)}100%{opacity:0;transform:translateY(-23px)}}
+
+#dealpeek{position:fixed!important;bottom:calc(env(safe-area-inset-bottom) + 100px)!important;left:50%!important;right:auto!important;transform:translateX(-50%)!important;z-index:15!important}
+.property-choice{position:relative!important;background:#232b3c!important;color:#fff!important;border:2px solid var(--tile-family)!important;border-top:9px solid var(--tile-family)!important;min-height:92px!important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;overflow:hidden;font-size:12px!important;padding:8px!important}
+.property-choice-name{font-weight:800;line-height:1.15}.property-choice-price{font-size:11px;color:#f9d45c}.property-choice-owner{position:absolute;top:3px;right:4px;font-size:12px}
+.offer-label{display:block;margin-top:14px;color:#d7dff1}.offer-label input{width:100%;margin-top:8px;padding:12px;border:1px solid #73809b;background:#141b2b;color:white;border-radius:9px;font-size:17px}
+.cell.ownership-flash{animation:owner-shine 1.6s ease-out}
+@keyframes owner-shine{0%,45%{filter:brightness(2.5);box-shadow:0 0 22px 8px #ffdf6e;transform:scale(1.09);z-index:3}100%{filter:none;transform:scale(1)}}
+.cash-effect.visible{animation:cash-pop 2.2s ease-out both!important}
+@keyframes cash-pop{0%{opacity:0;transform:translateY(12px) scale(.7)}15%,70%{opacity:1;transform:translateY(-6px) scale(1.18)}100%{opacity:0;transform:translateY(-25px) scale(1)}}
+.victory-overlay{position:fixed;inset:0;z-index:60;background:#0c1322e9;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;text-align:center;padding:25px}
+.victory-title{font-size:clamp(40px,10vw,76px);font-weight:1000;color:#ffda61;text-shadow:0 0 35px #ffd44e;animation:win-pulse 1s infinite alternate;position:relative;z-index:2}
+.victory-winner{font-size:clamp(26px,8vw,52px);font-weight:900;position:relative;z-index:2}
+.victory-money{position:absolute;top:-10%;font-size:30px;animation:money-rain var(--fall) linear infinite;left:var(--left);animation-delay:var(--delay)}
+@keyframes money-rain{to{transform:translate(90px,115vh) rotate(650deg)}}
+@keyframes win-pulse{to{transform:scale(1.12)}}
+.money-shooter{font-size:68px;z-index:2;animation:win-pulse .35s infinite alternate}
+.victory-overlay button{z-index:2;margin-top:28px}
+
+#modalactions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px!important;align-items:stretch}
+#modalactions>.property-choice{width:100%;min-width:0;aspect-ratio:1/1;min-height:0!important;border-radius:13px;padding:12px 4px 6px!important;justify-content:center;overflow:hidden;white-space:normal;overflow-wrap:anywhere}
+.property-choice-name{font-size:clamp(10px,2.8vw,13px);line-height:1.15;text-align:center;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.property-choice-price{font-size:clamp(11px,3vw,14px);font-weight:900;white-space:nowrap}
+.property-choice-index{position:absolute;left:4px;top:2px;font-size:9px;color:#b8c3d5}
+#modalactions>button:not(.property-choice){min-width:0;overflow-wrap:anywhere}
+#turnname{font-weight:800;margin:7px 0 2px}
+#message{margin-top:2px}
+
+/* BROKE! v4.0 — direction graphique de la maquette validée */
+:root{color:#f6f7ff;background:#0d121d}body{background:#0d121d;color:#f6f7ff}
+header{background:#1b2234;padding:18px 16px}h1{font-weight:1000;color:#ffda61;letter-spacing:2.3px;text-shadow:0 2px 0 #c58f20}
+.game{max-width:1050px}.hud{gap:9px;padding:12px 9px}.player{background:#1b2234;border:2px solid #414c65;border-radius:14px;padding:12px;box-shadow:0 1px 0 #111827}.player.active{border-color:#ffda61}.player strong{font-size:clamp(13px,3.1vw,19px)}.player-finances{font-size:clamp(11px,2.8vw,16px)}.player-total{color:#ffda61}
+.board{background:#344057;gap:3px;padding:4px;border-radius:13px}.cell{background:#202b40;border-radius:6px;border-top-width:7px}.cell .name{color:#f6f7ff;font-weight:850}.cell .cost{color:#ffda61}.cell.special{filter:saturate(1.18) brightness(1.12)}.cell.special .name{line-height:1.15}.cell .loot-amount{color:#ffda61;font-weight:1000;font-size:clamp(7px,1.7vw,15px);line-height:1.05;margin-top:2px}
+.center{position:relative;background:radial-gradient(ellipse at 50% 38%,#2c3b5b 0%,#1a263d 58%,#101a2c 100%);justify-content:initial;display:flex;flex-direction:column;align-items:center;padding:8px 7px 14px;border-radius:11px}
+.brand-top{position:absolute;top:12%;left:0;right:0;display:flex;align-items:center;flex-direction:column;gap:2px}.logo{font-family:Impact,'Arial Black',system-ui,sans-serif;font-size:clamp(28px,9vw,86px);font-weight:1000;letter-spacing:1.5px;color:#ffda61;line-height:1.05;text-shadow:1px 2px 0 #e3a936,2px 4px 0 #8f6525;transform:scaleX(1.06)}
+#jackpot{font-weight:900;color:#ffda61;font-size:clamp(10px,2.4vw,21px);background:#18253b;border:1px solid #536482;border-radius:999px;padding:3px 12px;box-shadow:0 2px 9px #10162266;white-space:nowrap}
+#turnname{position:absolute;top:46%;left:0;right:0;margin:0!important;font-weight:950;font-size:clamp(15px,3.8vw,34px);opacity:1;color:#f5f6ff}
+#timerlabel{position:absolute;top:36%;left:0;right:0}#move-progress{position:absolute;top:57%;left:0;right:0}#message{position:absolute;top:63%;left:6%;right:6%;max-width:none;margin:0;font-size:clamp(10px,2.35vw,20px);min-height:0}#actions{position:absolute;top:79%;left:2%;right:2%;gap:7px}#actions button{font-size:clamp(10px,2.5vw,18px);padding:clamp(7px,1.8vw,15px);border-radius:12px}button{background:#ffda61}button.secondary{background:#303d58}
+@media(min-width:700px){.brand-top{top:13%}#turnname{top:45%}}
+
+/* V4.1 : palette, typographie et proportions de la maquette de référence */
+:root{background:#0b101b;color:#f7f8fd}body{background:#0b101b;color:#f7f8fd;font-family:Arial,Helvetica,sans-serif}
+header{background:#192237;padding:20px 18px;border-bottom:3px solid #111725}header h1{font-family:Arial,Helvetica,sans-serif;font-weight:900;letter-spacing:1.5px;text-shadow:none;color:#ffda61;font-size:clamp(25px,5.2vw,45px)}header h1 span{font-size:clamp(10px,2vw,19px)!important;letter-spacing:2px;font-weight:800}
+.game{max-width:1100px;padding:8px 9px 18px}.hud{gap:12px;padding:9px 5px 16px}.player{background:#131c2e;border:2px solid #394965;border-radius:17px;padding:15px 12px;box-shadow:none}.player.active{border-color:#ffda61}.player strong{font-size:clamp(14px,3.3vw,21px)}.player-finances{font-size:clamp(11px,2.85vw,18px)}
+.board{background:#35415a;gap:4px;padding:5px;border-radius:15px}.cell{background:#172238;border-radius:7px;border-top-width:8px}.cell .name{font-weight:800;font-size:clamp(6px,1.33vw,14px);line-height:1.12}.cell .price{font-size:clamp(6px,1.15vw,12px)}.cell .cost{font-size:clamp(6px,1.13vw,12px);color:#ffdb63}.cell.special{filter:none;border-top:0!important}.cell.special .name{font-size:clamp(7px,1.4vw,15px);line-height:1.25}.cell.special .name::first-line{font-size:clamp(12px,2.7vw,24px)}.cell.special[data-cell-index="8"]{background:linear-gradient(145deg,#075238,#003b2d)!important;box-shadow:inset 0 0 0 2px #ffda61}.cell .loot-amount{font-size:clamp(8px,1.7vw,18px);color:#ffda61}
+.center{background:radial-gradient(ellipse at 50% 33%,#243652 0%,#152238 60%,#0c1525 100%);border-radius:12px}.brand-top{top:10%;gap:2px}.logo{font-family:Arial,Helvetica,sans-serif;font-weight:1000;font-size:clamp(37px,10.8vw,106px);letter-spacing:-1.5px;line-height:1;color:#ffda61;text-shadow:none;transform:none}#jackpot{background:#142137;border:2px solid #435779;border-radius:100px;padding:3px 13px;font-size:clamp(11px,2.5vw,23px);color:#ffda61;box-shadow:none}#turnname{top:43%;font-size:clamp(17px,4.2vw,39px);font-weight:900}#move-progress{top:56%}#message{top:63%;font-size:clamp(11px,2.6vw,23px)}#actions{top:78%;gap:12px}#actions button{font-size:clamp(12px,2.7vw,22px);padding:clamp(10px,2.4vw,22px);border-radius:14px}button{background:#ffda61;color:#111827}button.secondary{background:#29354e;color:#f6f7ff}
+@media(min-width:700px){.cell .name{font-size:clamp(9px,1.25vw,14px)}.cell .price,.cell .cost{font-size:clamp(9px,1.05vw,12px)}.brand-top{top:10%}#turnname{top:43%}}
+
+/* BROKE! 4.2 — direction artistique de la maquette approuvée */
+header h1{font-weight:1000;letter-spacing:.4px} .logo{font-family:system-ui,Arial,sans-serif;font-weight:1000;letter-spacing:-.055em;transform:rotate(-2deg) scale(1.08);text-shadow:0 2px 0 #d6a839,0 4px 0 #986d21,0 9px 16px #0007}
+.center{background:radial-gradient(ellipse at 48% 36%,#263955 0%,#17263e 52%,#0a1323 100%)}
+.cell.special[data-cell-index="2"]{background:linear-gradient(145deg,#009b72,#006e57);box-shadow:inset 0 0 0 2px #31f2a0,0 0 10px #00ffb44d}
+.cell.special[data-cell-index="31"]{background:#503374}
+.cell.special[data-cell-index="24"]{background:#a8232b}
+.cell.special[data-cell-index="0"]{background:#b8750d}
+.cell.special[data-cell-index="4"],.cell.special[data-cell-index="20"]{background:#096eae}
+.cell.special[data-cell-index="13"],.cell.special[data-cell-index="28"]{background:#329c75}
+.cell.special[data-cell-index="23"]{background:#87468c}
+.cell.special[data-cell-index="16"]{background:#414650}
+.cell.special[data-cell-index="8"]{background:#064734!important}
+.purchase-modal{border:3px solid #3197ff!important;box-shadow:0 0 0 2px #0a264a,0 12px 50px #000b!important}
+.purchase-modal h2{font-size:clamp(20px,4vw,30px);text-align:center;color:#62c6ff!important;border-bottom:1px solid #4c6284;padding-bottom:10px}
+.purchase-card{display:flex;align-items:center;gap:16px;margin:14px 0 18px}
+.purchase-tile{background:#172238;border:3px solid var(--purchase-color);border-top:12px solid var(--purchase-color);border-radius:12px;min-width:35%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;text-align:center;padding:10px;color:#fff}
+.purchase-tile span{font-size:clamp(27px,6vw,44px)}.purchase-tile strong{font-size:clamp(12px,3vw,20px);line-height:1.15}.purchase-tile small{font-size:11px;color:#ffda61}
+.purchase-info{font-size:clamp(12px,3vw,18px);line-height:1.7;min-width:0}.purchase-info em{color:#ffda61;font-weight:900;font-style:normal}
+.purchase-modal .actions{display:flex;flex-wrap:nowrap!important}.purchase-modal .actions button{flex:1;min-width:0}
+.wheel-shell{width:min(240px,65vw);aspect-ratio:1;margin:14px auto;position:relative;display:grid;place-items:center}.wheel-disc{height:100%;width:100%;border-radius:50%;border:7px solid #ffda61;display:grid;place-items:center;font-size:56px;background:conic-gradient(#ff5d73 0 60deg,#4aa9ff 60deg 120deg,#ffda61 120deg 180deg,#30c58b 180deg 240deg,#ac7be8 240deg 300deg,#f68d40 300deg 360deg);box-shadow:0 6px 22px #0009}.wheel-pointer{position:absolute;top:-20px;z-index:2;color:#fff;font-size:32px;text-shadow:0 2px 5px #000}.wheel-disc.spinning{animation:wheelspin 2.05s cubic-bezier(.12,.8,.2,1) forwards}@keyframes wheelspin{to{transform:rotate(1770deg)}}.wheel-hint,.wheel-result{text-align:center}.wheel-result{font-size:25px;font-weight:900;color:#ffda61;padding:20px 0}
+@media(max-width:440px){.purchase-card{gap:10px}.purchase-tile{padding:5px}.purchase-info{font-size:12px}.purchase-modal{padding:13px!important}}
+</style>
+<style>
+/* BROKE! 4.3 — logo de la maquette de référence */
+.center .logo{
+ font-family:Impact,"Arial Black",system-ui,sans-serif!important;
+ font-size:clamp(41px,11.7vw,112px)!important;
+ font-weight:1000!important;
+ font-stretch:condensed;
+ letter-spacing:-.035em!important;
+ color:#ffda61!important;
+ line-height:1.08!important;
+ transform:skew(-7deg) rotate(-2deg) scaleX(1.09)!important;
+ text-shadow:1px 2px 0 #e9b947,2px 3px 0 #a97524,3px 5px 0 #674b25,0 10px 18px #0006!important;
+}
+.purchase-modal .actions button{overflow-wrap:normal;word-break:normal;font-size:clamp(13px,3.3vw,20px);padding:12px 5px}
+</style>
+</head><body><header><h1>BROKE! <span style="font-size:12px;color:white">V4.3 • PLATEAU</span></h1><div style="display:flex;gap:7px"><button id="sound-toggle" type="button">🔊 Son : ON</button><button class="secondary" id="restart">↻</button></div></header><section class="setup" id="setup"><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px"><button type="button" class="secondary" onclick="location.href='salon.html'">🌐 Multijoueur en ligne (salons)</button><span class="hint">Mode local ci-dessous</span></div><h2>Nouvelle partie</h2><p>Un jeu de plateau stratégique : achetez des monuments, percevez des loyers, négociez et tentez des braquages.</p><label>Nombre de joueurs<select id="count"><option value="2">2 joueurs</option><option value="3">3 joueurs</option><option value="4">4 joueurs</option></select></label><label>Objectif de fortune totale<select id="target"><option value="2000">2 000 €</option><option value="3000">3 000 €</option><option value="5000">5 000 €</option><option value="7000">7 000 €</option><option value="10000">10 000 €</option></select></label><label>Chronomètre<select id="timed"><option value="0">Sans chronomètre</option><option value="1">Avec chronomètre</option></select></label><label id="duration-row" class="hidden">Durée<select id="duration"><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="20" selected>20 minutes</option><option value="30">30 minutes</option></select></label><button id="start" style="width:100%">Commencer la partie</button><p class="hint">Version locale jouable sur un seul écran, à tour de rôle. Les règles non encore validées sont provisoires.</p></section><section class="game hidden" id="game"><div class="hud" id="hud"></div><div class="board" id="board"><div class="dice-stage hidden" id="dice-stage"><div class="dice-cube" id="dice-cube"><div class="dice-face">1</div><div class="dice-face">2</div><div class="dice-face">3</div><div class="dice-face">4</div><div class="dice-face">5</div><div class="dice-face">6</div></div><div class="dice-result" id="dice-result"></div></div><div class="center"><div class="brand-top"><div class="logo">BROKE!</div><div class="jackpot" id="jackpot">💰 Cagnotte : 0 €</div></div><div id="timerlabel" class="hint"></div><div id="move-progress"></div><div class="sub" id="turnname"></div><div class="message" id="message"></div><div class="actions" id="actions"></div></div></div><div class="property-dock" id="propertytools"></div></section><button class="deal-peek hidden" id="dealpeek" type="button">👀 Voir le plateau</button><button class="peekreturn hidden" id="peekreturn" onclick="returnDeal()">↩ Revenir à la négociation</button><div class="modalwrap hidden" id="modalwrap"><div class="modal" id="modal"></div></div><script>
+const colors=['#ff5d73','#4aa9ff','#6de0a1','#e2a3ff'];const F={ny:['New York','#e55a64'],par:['Paris','#568fee'],lon:['Londres','#ac7be8'],rom:['Rome','#e5a148'],egy:['Égypte','#e0c95b'],jap:['Japon','#5db7a4'],ist:['Istanbul','#d77ea8'],ath:['Athènes','#8ca2e5'],myt:['Monuments','#94b36a'],esp:['Catalogne','#ad76ed']};
+const cells=[
+['Départ','start'],['Musée de Dalí','esp',180],['Roue de la chance','wheel'],['Sagrada Família','esp',200],['Négociation','deal'],['Tour Eiffel','par',320],['Arc de Triomphe','par',300],['Louvre','par',340],['Butin','loot'],['Big Ben','lon',380],['Tower Bridge','lon',400],['Colisée','rom',430],['Panthéon','rom',450],['Chance','chance'],['Pyramides de Gizeh','egy',480],['Sphinx','egy',500],['GAV','jail'],['Mont Fuji','jap',530],['Château d’Osaka','jap',550],['Temple Sensō-ji','jap',570],['Négociation','deal'],['Sainte-Sophie','ist',600],['Mosquée bleue','ist',620],['Taxe','tax'],['Braquage','rob'],['Madison Square Garden','ny',650],['Empire State Building','ny',675],['Brooklyn Bridge','ny',700],['Chance','chance'],['Parthénon','ath',800],['Acropole','ath',850],['Casino','casino']
+].map((a,i)=>({i,name:a[0],type:a[1],price:a[2]?Math.round(a[2]*.8/10)*10:0,owner:-1,level:0}));
+let cashEffects=new Map(),lastCashShown=new Map();let movingCell=-1,movingPlayer=-1,soundEnabled=true;let diceBusy=false,diceTimer=null;let players=[],current=0,phase='roll',roll=0,logs=[],pending=null,loot=0,dealPeek=false;let extraTurn=false,goal=5000,deadline=0,timerId=null,gameOver=false;const $=id=>document.getElementById(id);const round10=n=>Math.round(n/10)*10;const money=n=>`${Math.round(n).toLocaleString('fr-FR')} €`;const prop=c=>!!c.price;const estate=i=>cells.filter(c=>c.owner===i).reduce((v,c)=>v+c.price+c.level*upgradeCost(c),0);const wealth=i=>players[i].cash+estate(i);const complete=c=>c.owner>=0&&cells.filter(z=>z.type===c.type).every(z=>z.owner===c.owner);const upgradeCost=c=>round10(c.price*.5);const rentFor=c=>round10(c.price*(complete(c)?.3:.12)*(1+c.level));const active=()=>players[current];const addlog=s=>{logs.unshift(s);if(logs.length>50)logs.length=50};const say=s=>$('message').textContent=s;function render(){const b=$('board');b.querySelectorAll('.cell').forEach(e=>e.remove());cells.forEach(c=>{let x,y;if(c.i<=8){x=0;y=8-c.i}else if(c.i<=16){x=c.i-8;y=0}else if(c.i<=24){x=8;y=c.i-16}else{x=32-c.i;y=8}let el=document.createElement('div');el.className='cell'+(prop(c)?' owned-clickable':' special')+(c.level?' upgraded':'')+(movingCell===c.i?' moving-here':'');el.dataset.cellIndex=String(c.i);el.style.gridColumn=(x+1);el.style.gridRow=(y+1);if(prop(c))el.style.setProperty('--family',F[c.type][1]);else el.style.setProperty('--special',({start:'#A56A17',loot:'#183F35',jail:'#414650',rob:'#8D292C',deal:'#285B82',chance:'#438567',tax:'#76517D',casino:'#4b396b',wheel:'#087d59',bonus:'#3e6551'})[c.type]||'#30384d');el.innerHTML=`<span class="name">${!prop(c)?({start:"🚀",loot:"💰",jail:"⛓️",rob:"🥷",deal:"🤝",chance:"🍀",tax:"🪙",casino:"🎰",wheel:"🎡"})[c.type]||"":""}${!prop(c)?"<span class=\"special-icon\"></span>":""}${c.name}</span>${c.type==='loot'?`<span class="loot-amount">${money(loot)}</span>`:''}${c.price?`<span class="price">${money(c.price)}</span><span class="cost">Loyer ${money(rentFor(c))}${complete(c)?' ★':''}${c.level?' ⬆'+c.level:''}</span>`:''}${c.owner>=0?`<span class="owner" style="color:${colors[c.owner]}">◆</span>`:''}<div class="tokens">${players.map((p,i)=>p.pos===c.i?`<span class="token ${movingPlayer===i?'current-moving':''}" style="background:${colors[i]};color:${colors[i]}"></span>`:'').join('')}</div>`;if(prop(c)){el.setAttribute('role','button');el.setAttribute('tabindex','0');el.setAttribute('aria-label','Consulter '+c.name);el.onclick=()=>openProperty(c);el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openProperty(c)}}}b.appendChild(el)});$('hud').innerHTML=players.map((p,i)=>`<div class="player ${i===current?'active':''}" style="${p.bankrupt?'opacity:.4':''}"><strong style="color:${colors[i]}">● ${p.name}</strong><div class="player-finances"><div class="cash-line">💵 Liquidités : <b class="cash-value" data-cash-player="${i}">${money(p.cash)}</b><span class="cash-effect" data-effect-player="${i}"></span></div><div>🏛 Patrimoine : <b>${money(estate(i))}</b></div><div class="player-total">💎 Total : <b>${money(wealth(i))}</b></div></div><div class="player-status">${cells.filter(c=>c.owner===i).length} propriété(s) · ${p.jail?'🚔 '+p.jail+' tours':'Libre'}</div></div>`).join('');applyCashEffects();$('jackpot').textContent=`💰 Cagnotte : ${money(loot)}`;$('turnname').innerHTML=`Tour de <span style="color:${colors[current]}">${active().name}</span>`}
+function queueCashEffect(i,amount){
+ if(!amount)return;
+ const now=performance.now(),old=cashEffects.get(i);
+ cashEffects.set(i,{amount:(old?old.amount:0)+amount,from:old?old.from:players[i].cash-amount,to:players[i].cash,start:now,until:now+2300});
+ if(!cashAnimating){cashAnimating=true;requestAnimationFrame(animateCash)}
+}
+let cashAnimating=false;
+function animateCash(now){
+ let live=false;
+ for(const [i,fx] of cashEffects){
+  if(now>=fx.until){cashEffects.delete(i);continue}
+  live=true;
+  const badge=document.querySelector(`[data-effect-player="${i}"]`),value=document.querySelector(`[data-cash-player="${i}"]`);
+  if(!badge||!value)continue;
+  const t=Math.min(1,(now-fx.start)/1600),ease=1-Math.pow(1-t,3);
+  value.textContent=money(fx.from+(fx.to-fx.from)*ease);
+  badge.textContent=(fx.amount>0?'+':'−')+money(Math.abs(fx.amount));
+  badge.className='cash-effect visible '+(fx.amount>0?'positive':'negative');
+ }
+ if(live)requestAnimationFrame(animateCash);else{cashAnimating=false;render()}
+}
+function applyCashEffects(){const now=performance.now();for(const [i,fx] of cashEffects){
+ const badge=document.querySelector(`[data-effect-player="${i}"]`),value=document.querySelector(`[data-cash-player="${i}"]`);
+ if(!badge||!value||now>fx.until)continue;
+ badge.textContent=(fx.amount>0?'+':'−')+money(Math.abs(fx.amount));
+ badge.className='cash-effect visible '+(fx.amount>0?'positive':'negative');
+ const t=Math.min(1,(now-fx.start)/1600);value.textContent=money(fx.from+(fx.to-fx.from)*(1-Math.pow(1-t,3)));
+}}
+function cashChange(i,amount){if(!amount)return;players[i].cash+=amount;queueCashEffect(i,amount)}
+function propertyButton(c,action){
+ const b=document.createElement('button');b.className='property-choice';b.style.setProperty('--tile-family',F[c.type][1]);
+ b.innerHTML=`<span class="property-choice-index">${c.i}</span><span class="property-choice-name">${c.name}</span><span class="property-choice-price">${money(c.price)}</span><span class="property-choice-owner" style="color:${c.owner>=0?colors[c.owner]:'#fff'}">◆</span>`;
+ b.onclick=()=>{close();action()};return b;
+}
+function decoratePropertyOptions(options){const holder=$('modalactions');holder.innerHTML='';options.forEach(o=>{if(o.cell)holder.appendChild(propertyButton(o.cell,o.action));else{let b=document.createElement('button');b.textContent=o.label;b.onclick=()=>{close();o.action()};holder.appendChild(b)}})}
+function showPropertyChoices(title,body,options){popup(title,body,[]);decoratePropertyOptions(options);if(/Échange|Rachat|Proposition|Solde négatif/.test(title))$('dealpeek').classList.remove('hidden')}
+function transferProperty(c,newOwner){const old=c.owner;c.owner=newOwner;render();const el=[...document.querySelectorAll('.cell')].find(e=>e.style.gridColumn&&e.dataset.cellIndex==String(c.i));if(el){el.classList.remove('ownership-flash');void el.offsetWidth;el.classList.add('ownership-flash')}return old}
+function updateTools(){const e=$('propertytools');if(!e)return;e.innerHTML='';if(gameOver||!['roll','end'].includes(phase))return;const btn=document.createElement('button');btn.className='secondary';btn.textContent='🏛 Gérer mes propriétés';btn.onclick=()=>propertyList();e.appendChild(btn)}
+function buttons(items){$('actions').innerHTML='';items.forEach(([name,fn,secondary])=>{const b=document.createElement('button');b.textContent=name;if(secondary)b.className='secondary';b.onclick=fn;$('actions').appendChild(b)});updateTools()}function popup(title,body,items){$('dealpeek').classList.add('hidden');$('modal').innerHTML=`<h2>${title}</h2><div>${body}</div><div class="actions" id="modalactions"></div>`;items.forEach(([name,fn])=>{let b=document.createElement('button');b.textContent=name;b.onclick=()=>{close();fn()};$('modalactions').appendChild(b)});$('modalwrap').classList.remove('hidden');if(title.includes('Négociation')||title.includes('Rachat')||title.includes('Échange')||title.includes('Proposition')||title.includes('Offres reçues'))$('dealpeek').classList.remove('hidden')}function close(){$('modal').classList.remove('purchase-modal');$('modalwrap').classList.add('hidden');$('dealpeek').classList.add('hidden')}function peekDeal(){$('peekreturn').textContent=$('modal').classList.contains('purchase-modal')?'↩ Revenir à l’achat':'↩ Revenir à la négociation';$('modalwrap').classList.add('hidden');$('dealpeek').classList.add('hidden');$('peekreturn').classList.remove('hidden');dealPeek=true}function returnDeal(){$('peekreturn').classList.add('hidden');$('modalwrap').classList.remove('hidden');$('dealpeek').classList.remove('hidden');dealPeek=false}$('dealpeek').onclick=peekDeal;function endDealPeek(){dealPeek=false;$('dealpeek').classList.add('hidden');$('peekreturn').classList.add('hidden')}function next(){if(gameOver)return;if(extraTurn&&!active().bankrupt&&!active().jail){extraTurn=false;phase='roll';render();say('🎲 Six ! Tu rejoues immédiatement.');buttons([['🎲 Lancer le dé',move]]);return}extraTurn=false;if(players.filter(p=>!p.bankrupt).length<=1){say('🏆 '+players.find(p=>!p.bankrupt).name+' remporte la partie !');buttons([['Rejouer',reset]]);return}let skips=[];let guard=0;do{if(++guard>players.length*5){phase='roll';render();say('Tous les joueurs sont en GAV. Lance le dé.');buttons([['🎲 Lancer le dé',move]]);return}current=(current+1)%players.length;if(players[current].bankrupt)continue;if(players[current].jail>0){const captive=current;
+ phase='jail-choice';render();
+ const bail=Math.max(100,300-(players[captive].jail===3?0:(players[captive].jail===2?100:200)));
+ const opts=[];
+ if(players[captive].cash>=bail)opts.push([`💶 Payer ${money(bail)}`,()=>{cashChange(captive,-bail);players[captive].jail=0;phase='roll';render();say('Caution payée : lance le dé !');buttons([['🎲 Lancer le dé',move]])}]);
+ opts.push(['Passer ce tour',()=>{players[captive].jail--;next()}]);
+ popup('🚔 Garde à vue',`${players[captive].name} : ${players[captive].jail} tour(s) de GAV restant(s). ${players[captive].cash>=bail?'Caution : '+money(bail)+'.':'Liquidités insuffisantes pour la caution de '+money(bail)+'.'}`,opts);return}break}while(true);skips.forEach(addlog);phase='roll';render();say(skips.length?`${skips.join(' · ')}. ${active().name}, lance le dé.`:'Lance le dé pour avancer.');buttons([['🎲 Lancer le dé',move]])}
+function finish(auto=false){render();if(checkVictory())return;phase='end';if(auto){buttons([]);setTimeout(()=>{if(phase==='end'&&!dealPeek)next()},750)}else buttons([['Fin du tour →',next]])}function charge(p,amount,to=-1){cashChange(players.indexOf(p),-amount);if(to>=0)cashChange(to,amount);addlog(`${p.name} paie ${money(amount)}${to>=0?' à '+players[to].name:''}.`);if(p.cash<=-500){p.bankrupt=true;addlog(`${p.name} fait faillite (seuil : -500 €) !`);return false}if(p.cash<0){let owned=cells.filter(c=>c.owner===players.indexOf(p));if(owned.length){showPropertyChoices('Solde négatif',`${p.name} doit vendre un monument à la banque (70 % du prix) pour se renflouer.`,owned.map(c=>({cell:c,action:()=>{c.owner=-1;c.level=0;cashChange(players.indexOf(p),round10(c.price*.7));checkDebt(p)}})));return true}else{addlog(`${p.name} est endetté (${money(p.cash)}) mais reste en jeu jusqu'à -500 €.`);return false}}return false}function checkDebt(p){if(p.cash<=-500){p.bankrupt=true;addlog(`${p.name} fait faillite (seuil : -500 €) !`);finish(true)}else if(p.cash<0){charge(p,0)}else finish()}
+function clearDice(){clearTimeout(diceTimer);diceBusy=false;$('dice-stage').classList.add('hidden');$('dice-stage').classList.remove('settled');$('dice-cube').classList.remove('rolling')}
+let audioContext=null;
+function tone(freq,duration,delay=0,type='sine',volume=.12){if(!soundEnabled)return;try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;audioContext ||= new AC();if(audioContext.state==='suspended')audioContext.resume();const o=audioContext.createOscillator(),g=audioContext.createGain(),t=audioContext.currentTime+delay;o.type=type;o.frequency.setValueAtTime(freq,t);g.gain.setValueAtTime(.001,t);g.gain.exponentialRampToValueAtTime(volume,t+.012);g.gain.exponentialRampToValueAtTime(.001,t+duration);o.connect(g).connect(audioContext.destination);o.start(t);o.stop(t+duration+.025)}catch(e){}}
+function soundPurchase(){tone(523,.15,0);tone(659,.15,.13);tone(784,.25,.26)}
+function soundFailure(){tone(390,.15,0,'sawtooth',.09);tone(260,.2,.15,'triangle',.11);tone(165,.34,.34,'sawtooth',.08)}
+function soundRent(){tone(392,.18,0,'triangle');tone(294,.22,.17,'triangle');tone(220,.3,.34,'triangle')}
+function unlockAudio(){try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;if(!audioContext)audioContext=new AC();audioContext.resume()}catch(e){}}document.addEventListener('pointerdown',()=>{if(soundEnabled)unlockAudio()},{passive:true});document.addEventListener('touchstart',()=>{if(soundEnabled)unlockAudio()},{passive:true});document.addEventListener('visibilitychange',()=>{if(!document.hidden&&soundEnabled)unlockAudio()});$('sound-toggle').onclick=()=>{soundEnabled=!soundEnabled;$('sound-toggle').textContent=soundEnabled?'🔊 Son : ON':'🔇 Son : OFF';if(soundEnabled){unlockAudio();soundPurchase()}};let stepTimer=null;
+function clearStep(){clearTimeout(stepTimer);stepTimer=null;movingCell=-1;movingPlayer=-1;$('move-progress').textContent=''}
+function move(){if(diceBusy||phase!=='roll')return;unlockAudio();diceBusy=true;phase='rolling';buttons([]);let p=active(),roller=current;roll=1+Math.floor(Math.random()*6);extraTurn=roll===6;const result=roll,stage=$('dice-stage'),cube=$('dice-cube');stage.classList.remove('hidden','settled');cube.classList.remove('rolling');$('dice-result').textContent='🎲 Le dé roule…';void cube.offsetWidth;cube.classList.add('rolling');say(`${p.name} lance le dé…`);diceTimer=setTimeout(()=>{if(!diceBusy||current!==roller)return;cube.classList.remove('rolling');stage.classList.add('settled');cube.querySelector('.dice-face').textContent=result;$('dice-result').textContent=`Résultat : ${result}`;diceTimer=setTimeout(()=>{if(!diceBusy||current!==roller)return;clearDice();phase='moving';let steps=0;function advance(){if(current!==roller||phase!=='moving')return;if(steps>=result){diceBusy=false;movingCell=-1;movingPlayer=-1;$('move-progress').textContent='';render();say(`🎲 ${result} ! ${p.name} arrive sur ${cells[p.pos].name}.`);land(cells[p.pos]);return}p.pos=(p.pos+1)%32;steps++;movingCell=p.pos;movingPlayer=roller;$('move-progress').textContent=`DÉPLACEMENT : ${steps} / ${result}`;if(p.pos===0){const bonus=steps===result?400:200;cashChange(roller,bonus);addlog(`${p.name} reçoit ${money(bonus)} au départ.`)}tone(360+steps*32,.065,0,'triangle',.045);render();say(`🎲 ${result} — ${p.name} avance : ${steps}/${result} · ${cells[p.pos].name}`);stepTimer=setTimeout(advance,400)}advance()},550)},1500)}
+function land(c){let p=active();if(prop(c)){if(c.owner===-1){if(p.cash<c.price){say('Fonds insuffisants : tour terminé automatiquement.');finish(true);return}showPurchase(c);return}if(c.owner===current){say('Tu es chez toi !');finish();return}let family=cells.filter(z=>z.type===c.type);let monopoly=family.every(z=>z.owner===c.owner);let rent=rentFor(c);say(`Loyer de ${money(rent)} à ${players[c.owner].name}${monopoly?' (famille complète)':''}.`);unlockAudio();soundRent();if(!charge(p,rent,c.owner))finish();render();return}
+switch(c.type){case'start':say('Départ : bonus déjà crédité pendant le déplacement.');break;case'loot':{let amt=loot;cashChange(current,amt);loot=0;say(amt?`💰 Butin récupéré : +${money(amt)} !`:'💰 La cagnotte est vide : aucun gain.');break}case'bonus':cashChange(current,150);say('Prime : +150 € !');break;case'tax':loot+=100;if(charge(p,100)){render();return}say('Taxe : -100 € versés à la cagnotte.');break;case'chance':{let amt=[-150,-100,100,150,200][Math.floor(Math.random()*5)];if(amt<0){loot+=-amt;addlog(`Chance : ${money(-amt)} versés à la cagnotte.`);unlockAudio();soundFailure();if(charge(p,-amt)){render();return}}else p.cash+=amt;say(`Chance : ${amt>0?'+':''}${money(amt)}${amt<0?' versés à la cagnotte':''}`);break}case'jail':p.jail=3;say('🚔 GAV : jusqu’à 3 tours. Caution dégressive : 300 €, 200 €, puis 100 €.');addlog(`${p.name} est placé en GAV.`);
+ {const opts=[];if(p.cash>=300)opts.push(['💶 Payer 300 €',()=>{cashChange(current,-300);p.jail=0;render();say('Caution payée : tu es libre.');finish()}]);opts.push(['Rester en GAV',()=>finish()]);popup('🚔 Garde à vue',p.cash>=300?'Tu peux payer 300 € pour sortir immédiatement. La caution diminuera de 100 € à chaque tour.':'Tu ne disposes pas des 300 € nécessaires. La caution diminuera de 100 € à chaque tour.',opts)}return;case'deal':deal();return;case'casino':casino();return;case'wheel':wheelOfFortune();return;case'rob':rob();return}finish()}
+
+function showPurchase(c){
+ const p=active();
+ const fam=F[c.type];
+ const body=`<div class="purchase-card"><div class="purchase-tile" style="--purchase-color:${fam[1]}"><span>🏛️</span><strong>${c.name}</strong><small>${money(c.price)} · Loyer ${money(rentFor(c))}</small></div><div class="purchase-info"><div><b>Prix d’achat :</b> <em>${money(c.price)}</em></div><div><b>Loyer :</b> ${money(rentFor(c))}</div><div><b>Famille :</b> ${fam[0]}</div></div></div>`;
+ popup(c.name,body,[[`Acheter • ${money(c.price)}`,()=>{if(p.cash<c.price){say('Fonds insuffisants.');finish(true);return}cashChange(current,-c.price);c.owner=current;c.level=0;addlog(`${p.name} achète ${c.name}.`);unlockAudio();soundPurchase();finish()}],['Passer',()=>finish()]]);
+ $('modal').classList.add('purchase-modal');
+ $('dealpeek').classList.remove('hidden');
+}
+function wheelOfFortune(){
+ const prizes=[['💶 +50 €',()=>{cashChange(current,50);say('🎡 Roue : tu gagnes 50 € !');finish()}],['💶 +150 €',()=>{cashChange(current,150);say('🎡 Roue : tu gagnes 150 € !');finish()}],['💰 +100 € à la cagnotte',()=>{loot+=100;say('🎡 Roue : 100 € ajoutés à la cagnotte !');finish()}],['🍀 Carte chance',()=>{say('🎡 Roue : carte Chance !');land({type:'chance',name:'Chance'});} ],['🚀 Téléportation',()=>{let destinations=cells.filter(z=>z.i!==active().pos&&z.type!=='wheel');let dest=destinations[Math.floor(Math.random()*destinations.length)];active().pos=dest.i;render();say('🎡 Téléportation vers '+dest.name+' !');land(dest)}],['💶 -50 €',()=>{loot+=50;if(!charge(active(),50))finish();render();say('🎡 Roue : 50 € versés à la cagnotte.')}]];
+ popup('🎡 Roue de la chance','<div class="wheel-shell"><div class="wheel-pointer">▼</div><div class="wheel-disc" id="wheel-disc">🎡</div></div><p class="wheel-hint">Lance la roue pour découvrir ton sort !</p>',[['🎡 Lancer la roue',()=>{}]]);
+ const btn=$('modalactions').querySelector('button');
+ btn.onclick=()=>{btn.disabled=true;const disc=$('wheel-disc');disc.classList.add('spinning');const prize=prizes[Math.floor(Math.random()*prizes.length)];setTimeout(()=>{close();popup('🎡 Résultat',`<div class="wheel-result">${prize[0]}</div>`,[['Continuer',prize[1]]])},2100)};
+}
+function deal(){
+ const p=active(),mine=cells.filter(c=>c.owner===current),others=cells.filter(c=>c.owner>=0&&c.owner!==current);
+ if(!others.length){say('Aucune propriété adverse à négocier.');finish(true);return}
+ popup('🤝 Négociation','Choisis une option :',[
+ ['💶 Rachat de propriété',()=>buyDeal()],
+ ['🔁 Échange de propriétés',()=>exchangeDeal()],
+ ['Passer',()=>finish(true)]
+ ]);
+}
+function buyDeal(){
+ const others=cells.filter(c=>c.owner>=0&&c.owner!==current);
+ showPropertyChoices('🤝 Rachat','Choisis une propriété adverse. Offre minimale : 110 % de sa valeur.',[
+ ...others.map(c=>({cell:c,action:()=>offerPurchase(c)})),{label:'Retour',action:deal}]);
+}
+function offerPurchase(c){
+ const buyer=current,seller=c.owner,min=round10(c.price*1.1);
+ popup('💶 Offre de rachat',`${players[buyer].name} souhaite acheter ${c.name}. Offre minimale : ${money(min)}.<label class="offer-label">Ton offre (€)<input id="offer-price" type="number" min="${min}" step="10" value="${min}"></label>`,[
+ ['Proposer',()=>{const price=Number($('offer-price')?.value||min);proposeToSeller(c,buyer,seller,Math.max(min,price))}],
+ ['Retour',buyDeal]
+ ]);
+}
+function proposeToSeller(c,buyer,seller,offer){
+ if(c.owner!==seller){say('La propriété a changé de propriétaire.');finish(true);return}
+ popup('💶 Réponse du propriétaire',`${players[buyer].name} offre ${money(offer)} pour ${c.name}. ${players[seller].name} peut accepter, refuser ou faire une contre-offre.`,[
+ ['Accepter',()=>completePurchase(c,buyer,seller,offer)],
+ ['Contre-offre',()=>counterPurchase(c,buyer,seller,offer)],
+ ['Refuser',()=>{say('Offre refusée.');finish(true)}]
+ ]);
+}
+function counterPurchase(c,buyer,seller,offer){
+ const min=round10(c.price*1.1);
+ popup('💶 Contre-offre',`${players[seller].name} propose son prix de vente.<label class="offer-label">Prix demandé (€)<input id="counter-price" type="number" min="${min}" step="10" value="${Math.max(min,offer+50)}"></label>`,[
+ ['Envoyer',()=>{const price=Number($('counter-price')?.value||offer);if(price<min){counterPurchase(c,buyer,seller,offer);return}popup('💶 Décision de l’acheteur',`${players[seller].name} demande ${money(price)} pour ${c.name}.`,[
+ ['Accepter',()=>completePurchase(c,buyer,seller,price)],
+ ['Refuser',()=>{say('Contre-offre refusée.');finish(true)}]
+ ])}],
+ ['Retour',()=>proposeToSeller(c,buyer,seller,offer)]
+ ]);
+}
+function completePurchase(c,buyer,seller,price){
+ if(c.owner!==seller||players[buyer].cash<price){popup('Rachat impossible','Propriété indisponible ou liquidités insuffisantes.',[['Terminer',()=>finish(true)]]);return}
+ cashChange(buyer,-price);cashChange(seller,price);transferProperty(c,buyer);c.level=0;soundPurchase();render();say(`${c.name} racheté pour ${money(price)}.`);finish(true)
+}
+function exchangeDeal(){
+ const mine=cells.filter(c=>c.owner===current);
+ if(!mine.length){popup('Échange','Tu ne possèdes aucune propriété à proposer.',[['Retour',deal]]);return}
+ showPropertyChoices('🔁 Échange','Choisis la propriété que tu souhaites proposer.',[
+ ...mine.map(offered=>({cell:offered,action:()=>exchangeResponses(offered,players.map((p,i)=>i).filter(i=>i!==current&&!players[i].bankrupt),0,[])})),
+ {label:'Retour',action:deal}
+ ])
+}
+function exchangeResponses(offered,opponents,index,offers){
+ if(index>=opponents.length){
+ if(!offers.length){say('Aucune proposition reçue.');finish(true);return}
+ showPropertyChoices('🔁 Offres reçues',`Tu proposes ${offered.name}. Choisis une offre à accepter ou refuse toutes les propositions.`,[
+ ...offers.map(o=>({cell:o.property,action:()=>{
+ if(offered.owner!==current||o.property.owner!==o.player){say('Cette propriété a changé de propriétaire.');finish(true);return}
+ transferProperty(offered,o.player);transferProperty(o.property,current);cashChange(current,100);cashChange(o.player,100);soundPurchase();render();addlog('Bonus de transaction : +100 € pour chaque joueur.');say(`Échange conclu : ${offered.name} contre ${o.property.name}.`);finish(true)
+ }})),{label:'Tout refuser',action:()=>{say('Échange refusé.');finish(true)}}
+ ]);return
+ }
+ const opponent=opponents[index],candidate=cells.filter(c=>c.owner===opponent);
+ showPropertyChoices('🔁 Proposition',`${players[opponent].name} : ${players[current].name} propose ${offered.name}. Souhaites-tu proposer une propriété en retour ?`,[
+ ...candidate.map(c=>({cell:c,action:()=>exchangeResponses(offered,opponents,index+1,[...offers,{player:opponent,property:c}])})),
+ {label:'Passer',action:()=>exchangeResponses(offered,opponents,index+1,offers)}
+ ])
+}
+// Roulette européenne : 18 rouges, 18 noirs et un seul zéro vert.
+const rouletteRed=new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+function casino(){
+ const p=active();
+ if(p.cash<=0){say('🎰 Casino : aucune liquidité disponible pour miser.');finish(true);return}
+ popup('🎰 Casino',`<p>Roulette européenne : 18 rouges, 18 noirs et 1 vert (zéro).</p><label class="casino-label">Ta mise (€)<input id="casino-stake" type="number" inputmode="numeric" min="1" max="${Math.floor(p.cash)}" step="1" value="${Math.min(100,Math.floor(p.cash))}"></label><p class="hint">Rouge / Noir : gain net de 1× la mise (18/37). Vert : gain net de 35× la mise (1/37). Mise maximale : ${money(p.cash)}.</p>`,[['Ne pas jouer',()=>{say('Tu quittes le casino sans miser.');finish(true)}]]);
+ const buttonsArea=$('modalactions');
+ for(const [color,label] of [['red','🔴 Rouge'],['black','⚫ Noir'],['green','🟢 Vert']]){
+  const btn=document.createElement('button');btn.textContent=label;btn.className='casino-bet '+color;
+  btn.onclick=()=>{
+   const stake=Number($('casino-stake').value);
+   if(!Number.isInteger(stake)||stake<1||stake>Math.floor(p.cash)){alert(`Entre une mise entière de 1 à ${Math.floor(p.cash)} €.`);return}
+   close();phase='casino';buttons([]);const n=Math.floor(Math.random()*37),resultColor=n===0?'green':rouletteRed.has(n)?'red':'black';
+   const resultLabel={red:'🔴 Rouge',black:'⚫ Noir',green:'🟢 Vert'}[resultColor];
+   say('🎰 La roulette tourne…');
+   const overlay=document.createElement('div');overlay.className='casino-spin';overlay.innerHTML='<div class="roulette-wheel">🎰</div><div>La roulette tourne…</div>';
+   $('board').appendChild(overlay);tone(440,.1,0,'triangle',.06);tone(540,.1,.2,'triangle',.06);
+   setTimeout(()=>{
+    overlay.remove();cashChange(current,-stake);
+    const won=color===resultColor;
+    if(won)cashChange(current,stake*(color==='green'?36:2));
+    const delta=won?stake*(color==='green'?35:1):-stake;
+    addlog(`${p.name} mise ${money(stake)} sur ${label}. Roulette ${n} ${resultLabel} : ${won?'gain':'perte'} ${money(Math.abs(delta))}.`);
+    if(won)soundPurchase();else soundRent();
+    render();say(`🎰 ${n} ${resultLabel} ! ${won?'Gagné : +':'Perdu : −'}${money(Math.abs(delta))}.`);
+    if(p.cash<0){checkDebt(p);return}
+    finish(true);
+   },1650);
+  };buttonsArea.prepend(btn)
+ }
+}
+
+function animateToJail(i){
+ const player=players[i],origin=player.pos,target=16;
+ let clockwise=(target-origin+32)%32,reverse=(origin-target+32)%32;
+ let dir=clockwise<=reverse?1:-1,steps=Math.min(clockwise,reverse),count=0;
+ function step(){if(count>=steps){movingCell=-1;movingPlayer=-1;render();return}
+ player.pos=(player.pos+dir+32)%32;count++;movingCell=player.pos;movingPlayer=i;render();tone(190+count*20,.06,0,'triangle',.04);setTimeout(step,115)}
+ step();
+}
+function rob(){
+ const targets=players.map((p,i)=>({p,i})).filter(x=>x.i!==current&&!x.p.bankrupt);
+ const mine=cells.filter(c=>c.owner===current);
+ const eligible=cells.filter(c=>c.owner>=0&&c.owner!==current&&!players[c.owner].bankrupt&&!complete(c));
+ const choices=[['💶 Braquage d’argent — 35 %',()=>robCash()]];
+ if(mine.length>=2&&eligible.length)choices.push(['🏛️ Braquage de propriété — 33,3 %',()=>robProperty()]);
+ choices.push(['Annuler',()=>finish()]);
+ popup('🥷 Choisir un braquage','Sélectionne le type de braquage. Le vol de propriété est disponible uniquement avec au moins 2 propriétés à toi et une propriété adverse hors famille complète.',choices);
+}
+function robCash(){let p=active();let targets=players.filter((x,i)=>i!==current&&!x.bankrupt);popup('💥 Braquage d’argent',`Choisis une victime. Réussite : vol de 400 € (dans la limite de ses liquidités positives). Échec : indemnité égale à 10 % de ton solde positif, minimum 100 €, et 3 tours de GAV.`,[...targets.map(t=>[t.name,()=>{let success=Math.random()<.35;if(success){let amount=Math.min(400,Math.max(0,t.cash));cashChange(players.indexOf(t),-amount);cashChange(current,amount);say(`Braquage réussi ! +${money(amount)} pris à ${t.name}.`);addlog(`${p.name} braque ${t.name} : +${money(amount)}.`);finish()}else{let due=Math.max(100,round10(Math.max(0,p.cash)*.1));p.jail=3;extraTurn=false;animateToJail(current);let owned=cells.filter(c=>c.owner===current);if(p.cash>=due){cashChange(current,-due);cashChange(players.indexOf(t),due);addlog(`${p.name} rate son braquage, verse ${money(due)} et part en GAV.`);say(`Braquage raté : -${money(due)} et 3 tours de GAV.`);finish()}else if(owned.length){showPropertyChoices('Braquage raté !',`Liquidités insuffisantes : cède une propriété de ton choix à ${t.name}. Tu écopes aussi de 3 tours de GAV.`,owned.map(c=>({cell:c,action:()=>{transferProperty(c,players.indexOf(t));addlog(`${p.name} cède ${c.name} à ${t.name} et part en GAV.`);finish()}})))}else{cashChange(current,-due);cashChange(players.indexOf(t),due);addlog(`${p.name} paie ${money(due)} même en négatif et part en GAV.`);say(`Braquage raté : -${money(due)} et 3 tours de GAV.`);finish()}}}]),['Annuler',finish]])}
+function robProperty(){
+ const mine=cells.filter(c=>c.owner===current);
+ const eligible=cells.filter(c=>c.owner>=0&&c.owner!==current&&!players[c.owner].bankrupt&&!complete(c));
+ if(mine.length<2||!eligible.length){popup('Braquage indisponible','Il te faut au moins 2 propriétés et une propriété adverse qui ne fait pas partie d’une famille complète.',[['Retour',rob]]);return}
+ showPropertyChoices('🏛️ Braquage de propriété','Choisis la propriété à voler. Réussite : 33,3 %. Échec : tu cèdes 2 de tes propriétés à sa propriétaire ou son propriétaire et passes 1 tour en GAV.',[
+ ...eligible.map(c=>({cell:c,action:()=>resolvePropertyRobbery(c)})),{label:'Retour',action:rob}
+ ]);
+}
+function resolvePropertyRobbery(target){
+ const victim=target.owner,thief=current;
+ if(victim<0||victim===thief||complete(target)||cells.filter(c=>c.owner===thief).length<2){robProperty();return}
+ if(Math.random()<1/3){transferProperty(target,thief);addlog(`${players[thief].name} vole ${target.name} à ${players[victim].name}.`);say(`🏛️ Braquage réussi ! ${target.name} est à toi.`);finish();return}
+ players[thief].jail=1;extraTurn=false;animateToJail(thief);
+ addlog(`${players[thief].name} rate le braquage de ${target.name} : 2 propriétés à céder et 1 tour de GAV.`);
+ chooseRobberyPenalty(victim,2);
+}
+function chooseRobberyPenalty(victim,remaining){
+ const mine=cells.filter(c=>c.owner===current);
+ if(remaining<=0||!mine.length){say(`Braquage de propriété raté : 2 propriétés cédées à ${players[victim].name} et 1 tour de GAV.`);finish();return}
+ showPropertyChoices('⛓️ Braquage raté',`Choisis la ${remaining===2?'première':'deuxième'} propriété à céder à ${players[victim].name}. ${remaining} transfert(s) restant(s).`,mine.map(c=>({cell:c,action:()=>{transferProperty(c,victim);addlog(`${players[current].name} cède ${c.name} à ${players[victim].name}.`);chooseRobberyPenalty(victim,remaining-1)}})));
+}
+
+function propertyList(){
+ if(!['roll','end'].includes(phase)||gameOver)return;
+ const mine=cells.filter(c=>c.owner===current);
+ showPropertyChoices('🏛 Mes propriétés',mine.length?'Sélectionne une propriété.':'Tu ne possèdes aucune propriété.',[
+ ...mine.map(c=>({cell:c,action:()=>openProperty(c)})),{label:'Fermer',action:()=>{}}
+ ]);
+}
+function openProperty(c){
+ if(!prop(c)||!players.length)return;
+ const owned=c.owner>=0,own=owned?players[c.owner]:null;
+ const editable=owned&&c.owner===current&&!gameOver&&['roll','end'].includes(phase);
+ const cost=upgradeCost(c),sellPrice=round10(c.price*.7)+c.level*round10(cost*.7);
+ const nextRent=c.level<3?rentFor({...c,level:c.level+1}):rentFor(c);
+ const ownerLabel=own?own.name:'Aucun propriétaire';
+ const family=F[c.type]?.[0]||'Monument';
+ const body=`<div class="property-sheet">
+ <div class="property-family">${family}</div>
+ <div class="property-info"><span>Propriétaire</span><strong style="color:${own?colors[c.owner]:'#fff'}">${ownerLabel}</strong></div>
+ <div class="property-info"><span>Prix d'achat</span><strong>${money(c.price)}</strong></div>
+ <div class="property-info"><span>Valeur de vente à la banque</span><strong>${money(sellPrice)}</strong></div>
+ <div class="property-info"><span>Loyer actuel</span><strong>${money(rentFor(c))}</strong></div>
+ <div class="property-info"><span>Améliorations</span><strong>${c.level} / 3</strong></div>
+ <div class="property-info"><span>Loyer au niveau suivant</span><strong style="color:#a7e76b">${c.level<3?money(nextRent):'Niveau maximal'}</strong></div>
+ ${editable?'<p class="property-tip">Cette propriété vous appartient : vous pouvez la gérer.</p>':'<p class="property-tip">Consultation uniquement.</p>'}
+ </div>`;
+ const actions=[];
+ if(editable){
+  if(complete(c)&&c.level<3&&active().cash>=cost)actions.push(['⬆ Améliorer · '+money(cost),()=>{
+    if(c.owner!==current||gameOver||!['roll','end'].includes(phase)||!complete(c)||c.level>=3||active().cash<cost)return;
+    cashChange(current,-cost);c.level++;soundPurchase();render();say(`${c.name} amélioré : loyer ${money(rentFor(c))}.`);if(!checkVictory())openProperty(c);
+  }]);
+  actions.push(['💰 Vendre à la banque · '+money(sellPrice),()=>{
+    popup('Confirmer la vente',`Vendre ${c.name} à la banque pour ${money(sellPrice)} ?`,[
+      ['Confirmer',()=>{
+        if(c.owner!==current||gameOver||!['roll','end'].includes(phase))return;
+        cashChange(current,sellPrice);c.owner=-1;c.level=0;render();say(`${c.name} vendu à la banque pour ${money(sellPrice)}.`);if(!checkVictory())updateTools();
+      }],
+      ['Annuler',()=>openProperty(c)]
+    ]);
+  }]);
+ }
+ actions.push(['Fermer',()=>{}]);
+ popup('🏛 '+c.name,body,actions);
+}
+function checkVictory(){
+ if(gameOver)return true;
+ const winners=players.map((p,i)=>({p,i,value:wealth(i)})).filter(x=>!x.p.bankrupt&&x.value>=goal);
+ if(winners.length){endGame(winners.sort((a,b)=>b.value-a.value)[0].i,'Objectif de fortune atteint');return true}
+ return false
+}
+function endGame(winner,reason){
+ if(gameOver)return;gameOver=true;phase='gameover';clearInterval(timerId);clearStep();clearDice();close();endDealPeek();render();
+ say(`🏆 ${players[winner].name} gagne ! ${reason}. Fortune : ${money(wealth(winner))}.`);
+ buttons([['Nouvelle partie',reset]]);
+ const overlay=document.createElement('div');overlay.className='victory-overlay';overlay.id='victory-overlay';
+ overlay.innerHTML=`<div class="victory-title">🏆 VICTOIRE !</div><div class="victory-winner" style="color:${colors[winner]}">${players[winner].name}</div><p style="position:relative;z-index:2">Fortune : ${money(wealth(winner))}</p><div class="money-shooter">🕴️💸🔫</div><button id="victory-restart">🎲 Nouvelle partie</button>`;
+ for(let k=0;k<48;k++){const bill=document.createElement('span');bill.className='victory-money';bill.textContent=k%3?'💵':'💸';bill.style.setProperty('--left',`${(k*37)%100}%`);bill.style.setProperty('--fall',`${3+(k%7)*.5}s`);bill.style.setProperty('--delay',`${-k*.17}s`);overlay.appendChild(bill)}
+ document.body.appendChild(overlay);overlay.querySelector('#victory-restart').onclick=()=>{overlay.remove();reset()};
+}
+function clockTick(){
+ if(gameOver||!deadline)return;
+ const remaining=Math.max(0,Math.ceil((deadline-Date.now())/1000));
+ $('timerlabel').textContent=`⏱ Temps restant : ${Math.floor(remaining/60)}:${String(remaining%60).padStart(2,'0')}`;
+ if(!remaining){
+ const winner=players.map((p,i)=>({i,w:wealth(i)})).filter(x=>!players[x.i].bankrupt).sort((a,b)=>b.w-a.w)[0];
+ endGame(winner.i,'Temps écoulé')
+ }
+}
+$('timed').onchange=()=>{$('duration-row').classList.toggle('hidden',$('timed').value==='0')};
+
+function reset(){document.getElementById('victory-overlay')?.remove();cashEffects.clear();gameOver=false;clearInterval(timerId);deadline=0;extraTurn=false;clearStep();clearDice();endDealPeek();loot=0;$('setup').classList.remove('hidden');$('game').classList.add('hidden');close()}$('restart').onclick=()=>popup('Recommencer ?','La partie en cours sera perdue.',[['Oui, recommencer',reset],['Annuler',()=>{}]]);$('start').onclick=()=>{clearStep();clearDice();phase='roll';gameOver=false;extraTurn=false;goal=Number($('target').value);clearInterval(timerId);deadline=$('timed').value==='1'?Date.now()+Number($('duration').value)*60000:0;timerId=deadline?setInterval(clockTick,1000):null;$('timerlabel').textContent='';clockTick();let n=+$('count').value;players=Array.from({length:n},(_,i)=>({name:`Joueur ${i+1}`,cash:1500,pos:0,jail:0,bankrupt:false}));cells.forEach(c=>{c.owner=-1;c.level=0});current=0;loot=0;cashEffects.clear();endDealPeek();logs=[];$('setup').classList.add('hidden');$('game').classList.remove('hidden');render();say('Bienvenue dans BROKE! Lance le dé pour commencer.');buttons([['🎲 Lancer le dé',move]])};
+</script></body></html>
