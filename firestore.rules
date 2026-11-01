@@ -3,40 +3,84 @@ service cloud.firestore {
  match /databases/{database}/documents {
   match /rooms/{roomId} {
    function signed() { return request.auth != null; }
-   function oldPlayers() { return resource.data.players; }
-   function newPlayers() { return request.resource.data.players; }
-   function host() { return signed() && resource.data.host == request.auth.uid; }
-   function existingMember() { return signed() && request.auth.uid in oldPlayers(); }
-   function joinOnly() {
-    return signed() && resource.data.status == 'waiting'
-      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['players'])
-      && request.auth.uid in newPlayers()
-      && newPlayers().keys().size() <= 4
-      && newPlayers().diff(oldPlayers()).affectedKeys().hasOnly([request.auth.uid])
-      && newPlayers()[request.auth.uid].keys().hasOnly(['name','ready'])
-      && newPlayers()[request.auth.uid].name is string
-      && newPlayers()[request.auth.uid].name.size() >= 2
-      && newPlayers()[request.auth.uid].name.size() <= 20
-      && newPlayers()[request.auth.uid].ready is bool;
+   function id() { return request.auth.uid; }
+   function oldP() { return resource.data.players; }
+   function newP() { return request.resource.data.players; }
+   function member() { return signed() && id() in oldP(); }
+   function player(p) {
+    return p is map && p.keys().hasAll(['name','ready'])
+      && p.keys().hasOnly(['name','ready'])
+      && p.name is string && p.name.size() >= 2 && p.name.size() <= 20
+      && p.ready is bool;
    }
-   function hostStart() {
-    return host() && resource.data.status == 'waiting'
-      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','goal','duration','startedAt'])
-      && request.resource.data.status == 'playing'
-      && oldPlayers().keys().size() >= 2
-      && oldPlayers().keys().size() <= 4
-      && request.resource.data.goal in [2000,3000]
-      && request.resource.data.duration in [0,10,15,20,30];
+   function fieldsOnly(keys) {
+    return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
    }
-   allow create: if signed() && request.resource.data.host == request.auth.uid
-      && request.resource.data.status == 'waiting'
-      && request.resource.data.players.keys().size() == 1
-      && request.auth.uid in request.resource.data.players;
-   allow get: if signed();
-   allow list: if false;
-   function toggleReady() { return existingMember() && resource.data.status == 'waiting' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['players']) && newPlayers().diff(oldPlayers()).affectedKeys().hasOnly([request.auth.uid]) && newPlayers()[request.auth.uid].name == oldPlayers()[request.auth.uid].name && newPlayers()[request.auth.uid].ready is bool; }
-   allow update: if joinOnly() || toggleReady() || hostStart();
-   allow delete: if false;
+   function allReady() {
+    return oldP().values()[0].ready == true
+      && (oldP().size() < 2 || oldP().values()[1].ready == true)
+      && (oldP().size() < 3 || oldP().values()[2].ready == true)
+      && (oldP().size() < 4 || oldP().values()[3].ready == true);
+   }
+   allow get: if signed() && roomId.matches('[A-HJ-NP-Z2-9]{6}');
+   allow list, delete: if false;
+   allow create: if signed() && roomId.matches('[A-HJ-NP-Z2-9]{6}')
+     && request.resource.data.keys().hasOnly(['host','status','goal','duration','createdAt','players'])
+     && request.resource.data.keys().hasAll(['host','status','goal','duration','createdAt','players'])
+     && request.resource.data.host == id()
+     && request.resource.data.status == 'waiting'
+     && request.resource.data.goal == 3000
+     && request.resource.data.duration == 0
+     && request.resource.data.createdAt == request.time
+     && request.resource.data.players is map
+     && request.resource.data.players.size() == 1
+     && id() in request.resource.data.players
+     && player(request.resource.data.players[id()])
+     && request.resource.data.players[id()].ready == false;
+   allow update: if signed() && (
+     (
+       resource.data.status == 'waiting' && !member()
+       && fieldsOnly(['players'])
+       && newP().size() == oldP().size() + 1 && newP().size() <= 4
+       && newP().diff(oldP()).addedKeys().hasOnly([id()])
+       && newP().diff(oldP()).addedKeys().hasAll([id()])
+       && newP().diff(oldP()).changedKeys().size() == 0
+       && newP().diff(oldP()).removedKeys().size() == 0
+       && player(newP()[id()]) && newP()[id()].ready == false
+     ) || (
+       resource.data.status == 'waiting' && member()
+       && fieldsOnly(['players'])
+       && newP().size() == oldP().size()
+       && newP().diff(oldP()).affectedKeys().hasOnly([id()])
+       && newP()[id()].name == oldP()[id()].name
+       && player(newP()[id()])
+     ) || (
+       member() && resource.data.host == id()
+       && resource.data.status == 'waiting'
+       && fieldsOnly(['status','goal','duration','startedAt'])
+       && request.resource.data.status == 'playing'
+       && oldP().size() >= 2 && oldP().size() <= 4
+       && allReady()
+       && request.resource.data.goal in [2000,3000]
+       && request.resource.data.duration in [0,10,15,20,30]
+       && request.resource.data.startedAt == request.time
+     ) || (
+       member() && oldP().size() > 1
+       && fieldsOnly(['players','host'])
+       && newP().size() == oldP().size() - 1
+       && newP().diff(oldP()).removedKeys().hasOnly([id()])
+       && newP().diff(oldP()).removedKeys().hasAll([id()])
+       && newP().diff(oldP()).addedKeys().size() == 0
+       && newP().diff(oldP()).changedKeys().size() == 0
+       && request.resource.data.host in newP().keys()
+       && (resource.data.host == id() || request.resource.data.host == resource.data.host)
+     ) || (
+       member() && oldP().size() == 1 && resource.data.host == id()
+       && fieldsOnly(['status','players'])
+       && request.resource.data.status == 'closed'
+       && newP().size() == 0
+     )
+   );
   }
  }
 }
