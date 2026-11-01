@@ -65,6 +65,15 @@ service cloud.firestore {
        && request.resource.data.duration in [0,10,15,20,30]
        && request.resource.data.startedAt == request.time
      ) || (
+       // Only the current player can advance the shared turn.
+       member() && resource.data.status == 'playing'
+       && fieldsOnly(['turnIndex'])
+       && request.resource.data.turnIndex is int
+       && request.resource.data.turnIndex >= 0
+       && request.resource.data.turnIndex < oldP().size()
+       && request.resource.data.turnIndex == ((resource.data.get('turnIndex', 0) + 1) % oldP().size())
+       && oldP().keys()[resource.data.get('turnIndex', 0) % oldP().size()] == id()
+     ) || (
        member() && oldP().size() > 1
        && fieldsOnly(['players','host'])
        && newP().size() == oldP().size() - 1
