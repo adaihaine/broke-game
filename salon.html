@@ -8,8 +8,8 @@
 import{initializeApp}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
 import{getAuth,signInAnonymously,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 import{getFirestore,doc,getDoc,setDoc,updateDoc,runTransaction,onSnapshot,serverTimestamp,arrayUnion,deleteField}from"https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
-import{firebaseConfig}from"./firebase-config.js";
-const $=id=>document.getElementById(id);let db,auth,uid,roomId=null,room=null,unsub=null;const saved=JSON.parse(localStorage.getItem("brokeSalon")||"null");if(saved?.name)$("nickname").value=saved.name;
+import{firebaseConfig}from"./firebase-config.js?v=20261101-keyfix";
+const $=id=>document.getElementById(id);let db,auth,uid,roomId=null,room=null,unsub=null;const saved=(()=>{try{return JSON.parse(localStorage.getItem("brokeSalon")||"null")}catch{return null}})();if(saved?.name)$("nickname").value=saved.name;
 const showError=e=>$("error").textContent=typeof e==="string"?e:((e?.code?e.code+" — ":"")+(e?.message||"Erreur de connexion"));const validName=()=>{const n=$("nickname").value.trim().slice(0,20);if(n.length<2)throw Error("Choisis un pseudo d’au moins 2 caractères.");return n};
 const code=()=>Array.from(crypto.getRandomValues(new Uint8Array(6)),n=>"ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[n%32]).join("");
 const roomRef=id=>doc(db,"rooms",id);
