@@ -1,7 +1,7 @@
 // Configuration publique de l'application Web BROKE! (Firebase).
 // Ne jamais placer de clé de compte de service dans ce fichier.
 export const firebaseConfig = {
-  apiKey: "AIzaSyCmzlUPGADH4YNGHGx88wAmYcYWgsiQ8qY",
+  apiKey: "AIzaSyCMzlUPGADH4YNGHGx88wAmYcYWgsiQ8qY",
   authDomain: "broke-game-169a7.firebaseapp.com",
   projectId: "broke-game-169a7",
   storageBucket: "broke-game-169a7.firebasestorage.app",
