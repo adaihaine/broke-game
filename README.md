@@ -5,7 +5,7 @@ Jeu local dans `index.html`, salons privés à 2–4 joueurs dans `salon.html`.
 ## Jouer sur téléphone
 
 La version publiée est disponible sur
-https://adaihaine.github.io/broke-game/salon.html?v=20261123-3
+https://adaihaine.github.io/broke-game/salon.html?v=20261123-4
 et fonctionne sur des réseaux différents.
 
 Le plateau utilise le flux Firestore avec réponses courtes pour les réseaux mobiles.

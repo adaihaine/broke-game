@@ -79,25 +79,6 @@
 .online-room #actions:empty,
 .online-room #timerlabel:empty,
 .online-room #move-progress:empty { display: none; }
-.online-room #dice-stage { contain: layout paint; perspective: none; }
-.online-room #dice-stage.hidden { display: none !important; visibility: hidden; }
-.online-room #dice-cube { transform-style: flat; filter: none; width: 64px; height: 64px; }
-.online-room #dice-cube.rolling { animation: online-dice-shake .35s ease-out; }
-.online-room .online-die {
-  display: grid; place-items: center; width: 64px; height: 64px;
-  border-radius: 12px; border: 2px solid #c5cbd5; background: #fff;
-  color: #182035; font-size: 44px; font-weight: 900;
-}
-.online-room #dice-result { left: 4%; right: 4%; text-align: center; font-size: 14px; }
-@keyframes online-dice-shake {
-  0% { transform: translate(-18px, -12px) rotate(-35deg); }
-  45% { transform: translate(12px, 6px) rotate(25deg); }
-  100% { transform: none; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .online-room #dice-cube.rolling { animation: none; }
-}
-
 /* Keep each board control in its own row. */
 .online-room #peekreturn:not(.hidden) {
   position: static !important;
@@ -147,15 +128,35 @@
 }
 .online-room .center { overflow: auto; }
 .online-room #turnname { overflow-wrap: anywhere; }
+.online-room .center.showing-roll > :not(#dice-stage) { display: none; }
 .online-room #dice-stage {
   position: static;
-  gap: 12px;
-  min-height: 92px;
-  margin-top: 8px;
-  padding: 12px;
+  flex-direction: column;
+  gap: 18px;
+  padding: 16px;
+  width: 100%;
+  min-height: 0;
+  background: transparent;
 }
-.online-room #dice-cube { flex: none; }
-.online-room #dice-result { position: static; overflow-wrap: anywhere; }
+.online-room #dice-cube {
+  flex: none;
+  transform: rotateX(var(--dice-x, 0deg)) rotateY(var(--dice-y, 0deg));
+}
+.online-room #dice-cube.rolling { animation: online-dice-turn .68s ease-in-out; }
+.online-room #dice-result {
+  position: static;
+  text-align: center;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.online-room #board > .moving-here { animation: none; }
+@keyframes online-dice-turn {
+  from { transform: rotateX(-30deg) rotateY(-35deg); }
+  to { transform: rotateX(calc(720deg + var(--dice-x))) rotateY(calc(720deg + var(--dice-y))); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .online-room #dice-cube.rolling { animation: none; }
+}
 .online-room #online-banner { position: static !important; overflow-wrap: anywhere; }
 
 .online-room .modalwrap { background: #10131b; }

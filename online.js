@@ -13,7 +13,7 @@ const escape = text => String(text).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '
 let state, room, uid, db, ref, revision = -1, busy = false, connected = false, lastError = null;
 let client, auth, renderedState = null, renderedLogs = null;
 let decisionDraft = [];
-let initialization = false, inspection = null, propertiesOpen = false, modalHidden = false, lastAnimation = null, animationTimer = null;
+let initialization = false, inspection = null, propertiesOpen = false, modalHidden = false, lastAnimation = null, playingRoll = false;
 const banner = document.createElement('div');
 banner.id = 'online-banner';
 banner.style.cssText = 'position:sticky;top:0;z-index:100;background:#183f35;color:white;padding:10px 14px;font-size:13px;text-align:center';
@@ -24,17 +24,14 @@ if (roomId) {
   $('setup').classList.add('hidden');
   document.body.classList.add('online-room');
   document.body.prepend(banner); $('game').appendChild(history);
-  // Use a single 2D die. Hidden 3D faces can leave stale composited text on mobile Safari.
-  $('dice-cube').replaceChildren();
-  const die = document.createElement('div'); die.className = 'online-die';
-  $('dice-cube').appendChild(die);
-  $('board').after($('dice-stage'), $('peekreturn'));
+  document.querySelector('.center').appendChild($('dice-stage'));
+  $('board').after($('peekreturn'));
   banner.textContent = 'Connexion au salon ' + roomId + '…';
   $('restart').onclick = () => { location.href = './salon.html'; };
   // Keep local board-peeking controls while shared decisions stay serialized.
   $('peekreturn').onclick = () => { modalHidden = false; render(); };
   $('dealpeek').onclick = () => { modalHidden = true; render(); };
-  window.onlineInspect = i => { inspection = i; propertiesOpen = false; render(); };
+  window.onlineInspect = i => { if (playingRoll) return; inspection = i; propertiesOpen = false; render(); };
   window.addEventListener('offline', () => { connected = false; render(); });
   window.addEventListener('online', () => { banner.textContent = 'Reconnexion au salon…'; refreshRoom(); });
   document.addEventListener('visibilitychange', () => {
@@ -318,7 +315,13 @@ function renderDeal() {
   act('Passer', 'pass', {}, target);
 }
 function render() {
-  if (!state) return;
+  if (!state || playingRoll) return;
+  const animation = state.animation;
+  if (animation && animation.id !== lastAnimation) {
+    lastAnimation = animation.id;
+    playRoll(animation);
+    return;
+  }
   $('game').dataset.revision = String(revision);
   if (renderedState !== state) { window.onlineView(state); renderedState = state; }
   const me = myIndex(), name = state.players[me]?.name || '';
@@ -336,7 +339,10 @@ function render() {
   if (inspection !== null) inspectProperty(inspection);
   else if (propertiesOpen) renderProperties(me);
   else if (!$('modalwrap').classList.contains('hidden')) {
-    for (const [id, value] of decisionDraft) $(id).value = value;
+    for (const [id, value] of decisionDraft) {
+      const field = $(id);
+      if (field) field.value = value;
+    }
   }
   const dock = $('propertytools');
   if (!state.players[me]?.bankrupt) {
@@ -362,23 +368,47 @@ function render() {
     const line = document.createElement("p"); line.setAttribute("role", "alert"); line.textContent = lastError; $("actions").appendChild(line);
   }
   updateClock();
-  showDice();
 }
-function showDice() {
-  const animation = state.animation;
-  if (!animation || animation.id === lastAnimation) return;
-  lastAnimation = animation.id;
-  clearTimeout(animationTimer);
-  const stage = $('dice-stage'), cube = $('dice-cube');
-  stage.classList.remove('hidden', 'settled'); cube.classList.add('rolling');
-  cube.querySelector('.online-die').textContent = animation.roll;
-  $('dice-result').textContent = state.players[animation.player].name + ' lance le dé…';
-  animationTimer = setTimeout(() => {
-    cube.classList.remove('rolling'); stage.classList.add('settled');
-    cube.querySelector('.online-die').textContent = animation.roll;
-    $('dice-result').textContent = '🎲 Résultat · ' + animation.roll;
-    animationTimer = setTimeout(() => { stage.classList.add('hidden'); $('dice-result').textContent = ''; }, 650);
-  }, 350);
+const rollPause = ms => new Promise(resolve => setTimeout(resolve, ms));
+async function playRoll({ player, origin, roll }) {
+  playingRoll = true;
+  const stage = $('dice-stage'), cube = $('dice-cube'), result = $('dice-result');
+  const center = stage.parentElement;
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Reverse the corresponding face rotation so the result faces the player.
+  const rotations = [[0, 0], [0, -90], [-90, 0], [90, 0], [0, 90], [0, 180]];
+  const [x, y] = rotations[roll - 1];
+  try {
+    $('modalwrap').classList.add('hidden');
+    $('peekreturn').classList.add('hidden');
+    $('actions').replaceChildren();
+    $('propertytools').querySelectorAll('button').forEach(button => { button.disabled = true; });
+    window.onlineMovePawn(player, origin);
+    cube.style.setProperty('--dice-x', x + 'deg');
+    cube.style.setProperty('--dice-y', y + 'deg');
+    result.textContent = state.players[player].name + ' lance le dé…';
+    center.classList.add('showing-roll');
+    stage.classList.remove('hidden');
+    cube.classList.add('rolling');
+    if (!reducedMotion) await rollPause(680);
+    cube.classList.remove('rolling');
+    result.textContent = '🎲 Résultat · ' + roll;
+    await rollPause(380);
+    center.classList.remove('showing-roll');
+    stage.classList.add('hidden');
+    $('move-progress').textContent = '🎲 Résultat · ' + roll;
+    for (let step = 1; step <= roll; step++) {
+      window.onlineMovePawn(player, (origin + step) % board.length);
+      await rollPause(180);
+    }
+  } finally {
+    center.classList.remove('showing-roll');
+    stage.classList.add('hidden');
+    cube.classList.remove('rolling');
+    result.textContent = '';
+    playingRoll = false;
+    render();
+  }
 }
 let timeoutPending = false;
 function updateClock() {
