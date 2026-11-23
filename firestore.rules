@@ -22,6 +22,50 @@ service cloud.firestore {
       && (oldP().size() < 3 || oldP().values()[2].ready == true)
       && (oldP().size() < 4 || oldP().values()[3].ready == true);
    }
+   function validPlayer(p) {
+    return p is map && p.cash is number && p.pos is int && p.pos >= 0 && p.pos < 32
+      && p.jail is int && p.jail >= 0 && p.jail <= 3 && p.bankrupt is bool
+      && p.name is string;
+   }
+   function validState(s) {
+    return s is map && s.version == 2
+      && s.playerIds is list && s.playerIds == oldP().keys()
+      && s.players is list && s.players.size() == oldP().size()
+      && validPlayer(s.players[0]) && validPlayer(s.players[1])
+      && (s.players.size() < 3 || validPlayer(s.players[2]))
+      && (s.players.size() < 4 || validPlayer(s.players[3]))
+      && s.players[0].name == oldP()[s.playerIds[0]].name
+      && s.players[1].name == oldP()[s.playerIds[1]].name
+      && (s.players.size() < 3 || s.players[2].name == oldP()[s.playerIds[2]].name)
+      && (s.players.size() < 4 || s.players[3].name == oldP()[s.playerIds[3]].name)
+      && s.properties is list && s.properties.size() == 32
+      && s.current is int && s.current >= 0 && s.current < oldP().size()
+      && s.phase in ['roll','end','purchase','jail-choice','debt','wheel','casino',
+        'rob','rob-penalty','deal','offer-response','exchange-response','exchange-pick','gameover']
+      && s.goal == resource.data.goal && s.deadline is number
+      && s.roll is int && s.roll >= 0 && s.roll <= 6
+      && s.loot is number && s.loot >= 0 && s.extraTurn is bool && s.gameOver is bool
+      && s.logs is list && s.logs.size() <= 30
+      && (s.pending == null || (s.pending is map && s.pending.actor is int
+        && s.pending.actor >= 0 && s.pending.actor < oldP().size()
+        && s.pending.type == s.phase))
+      && s.lastActionId is string && s.lastActionId.size() <= 200;
+   }
+   function activeActor(s) {
+    return s.get('pending', null) is map
+      ? s.pending.get('actor', s.current) : s.current;
+   }
+   function mayAdvance(before, after) {
+    return !before.gameOver && after.deadline == before.deadline && (
+      oldP().keys()[activeActor(before)] == id()
+      || (after.lastAction.type == 'quit' && after.lastAction.uid == id()
+        && before.players[after.lastAction.player].bankrupt == false
+        && after.players[after.lastAction.player].bankrupt == true
+        && oldP().keys()[after.lastAction.player] == id())
+      || (after.lastAction.type == 'timeout' && before.deadline > 0
+        && request.time.toMillis() >= before.deadline && after.gameOver == true)
+    );
+   }
    allow get: if signed() && roomId.matches('[A-HJ-NP-Z2-9]{6}');
    allow list, delete: if false;
    allow create: if signed() && roomId.matches('[A-HJ-NP-Z2-9]{6}')
@@ -65,42 +109,20 @@ service cloud.firestore {
        && request.resource.data.duration in [0,10,15,20,30]
        && request.resource.data.startedAt == request.time
      ) || (
-       // Online gameplay prototype: only the player whose turn is active may
-       // publish a bounded full-board snapshot. Future server validation required.
        member() && resource.data.status == 'playing'
        && fieldsOnly(['gameState','gameRevision'])
-       && request.resource.data.gameState is map
-       && request.resource.data.gameState.keys().hasAll(['players','properties','current','phase','roll','loot','extraTurn','goal','deadline','gameOver','logs'])
-       && request.resource.data.gameState.players is list
-       && request.resource.data.gameState.players.size() == oldP().size()
-       && request.resource.data.gameState.properties is list
-       && request.resource.data.gameState.properties.size() == 32
-       && request.resource.data.gameState.current is int
-       && request.resource.data.gameState.current >= 0
-       && request.resource.data.gameState.current < oldP().size()
+       && validState(request.resource.data.gameState)
        && request.resource.data.gameRevision is int
        && request.resource.data.gameRevision == resource.data.get('gameRevision', 0) + 1
        && (
          (!('gameState' in resource.data) && resource.data.host == id()
-           && request.resource.data.gameState.current == 0)
+           && request.resource.data.gameState.current == 0
+           && request.resource.data.gameState.phase == 'roll')
          || ('gameState' in resource.data
-           && oldP().keys()[resource.data.gameState.current] == id()
-           && (
-             request.resource.data.gameState.current == resource.data.gameState.current
-             || request.resource.data.gameState.current == ((resource.data.gameState.current + 1) % oldP().size())
-           ))
+           && mayAdvance(resource.data.gameState, request.resource.data.gameState))
        )
      ) || (
-       // Only the current player can advance the shared turn.
-       member() && resource.data.status == 'playing'
-       && fieldsOnly(['turnIndex'])
-       && request.resource.data.turnIndex is int
-       && request.resource.data.turnIndex >= 0
-       && request.resource.data.turnIndex < oldP().size()
-       && request.resource.data.turnIndex == ((resource.data.get('turnIndex', 0) + 1) % oldP().size())
-       && oldP().keys()[resource.data.get('turnIndex', 0) % oldP().size()] == id()
-     ) || (
-       member() && oldP().size() > 1
+       resource.data.status == 'waiting' && member() && oldP().size() > 1
        && fieldsOnly(['players','host'])
        && newP().size() == oldP().size() - 1
        && newP().diff(oldP()).removedKeys().hasOnly([id()])
@@ -110,7 +132,7 @@ service cloud.firestore {
        && request.resource.data.host in newP().keys()
        && (resource.data.host == id() || request.resource.data.host == resource.data.host)
      ) || (
-       member() && oldP().size() == 1 && resource.data.host == id()
+       resource.data.status == 'waiting' && member() && oldP().size() == 1 && resource.data.host == id()
        && fieldsOnly(['status','players'])
        && request.resource.data.status == 'closed'
        && newP().size() == 0
