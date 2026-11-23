@@ -1,15 +1,17 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js';
 import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js';
-import { getFirestore, doc, onSnapshot, runTransaction } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
+import { initializeFirestore, doc, onSnapshot, runTransaction } from 'https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js';
 import { firebaseConfig } from './firebase-config.js';
-import { board } from './online-board.js';
-import { createGame, normalizeGame, reduceGame, actor, complete, rent, upgradeCost, saleValue, wealth, round10 } from './online-engine.js';
+import { createRoomClient, encodeValue, decodeDocument } from './online-sync.js?v=20261123-2';
+import { board } from './online-board.js?v=20261123-2';
+import { createGame, normalizeGame, reduceGame, actor, complete, rent, upgradeCost, saleValue, wealth, round10 } from './online-engine.js?v=20261123-2';
 
 const roomId = new URLSearchParams(location.search).get('room');
 const $ = id => document.getElementById(id);
 const money = n => Math.round(n).toLocaleString('fr-FR') + ' €';
 const escape = text => String(text).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 let state, room, uid, db, ref, revision = -1, busy = false, connected = false, lastError = null;
+let client, auth, renderedState = null, renderedLogs = null;
 let initialization = false, inspection = null, modalHidden = false, lastAnimation = null, animationTimer = null;
 const banner = document.createElement('div');
 banner.id = 'online-banner';
@@ -18,7 +20,13 @@ const history = document.createElement('div');
 history.className = 'log'; history.id = 'online-history';
 if (roomId) {
   $('setup').classList.add('hidden');
+  document.body.classList.add('online-room');
   document.body.prepend(banner); $('game').appendChild(history);
+  // Use a single 2D die. Hidden 3D faces can leave stale composited text on mobile Safari.
+  $('dice-cube').replaceChildren();
+  const die = document.createElement('div'); die.className = 'online-die';
+  $('dice-cube').appendChild(die);
+  document.querySelector('.center').appendChild($('dice-stage'));
   banner.textContent = 'Connexion au salon ' + roomId + '…';
   $('restart').onclick = () => { location.href = './salon.html'; };
   // Keep local board-peeking controls while shared decisions stay serialized.
@@ -26,14 +34,14 @@ if (roomId) {
   $('dealpeek').onclick = () => { modalHidden = true; render(); };
   window.onlineInspect = i => { inspection = i; modalHidden = false; render(); };
   window.addEventListener('offline', () => { connected = false; render(); });
-  window.addEventListener('online', () => { banner.textContent = 'Reconnexion au salon…'; });
+  window.addEventListener('online', () => { banner.textContent = 'Reconnexion au salon…'; refreshRoom(); });
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && state) { updateClock(); render(); }
+    if (!document.hidden) { refreshRoom(); if (state) { updateClock(); render(); } }
   });
   connect();
 }
 function errorMessage(error) {
-  if (error.code === 'permission-denied') return 'Les règles Firebase refusent cette action. La version des règles du jeu doit être publiée.';
+  if (error.code === 'permission-denied' || error.status === 403) return 'Les règles Firebase refusent cette action. La version des règles du jeu doit être publiée.';
   if (error.code === 'unavailable') return 'Connexion interrompue. Réessaie après la reconnexion.';
   return error.message || String(error);
 }
@@ -44,30 +52,93 @@ function showError(error) {
   const line = document.createElement('p'); line.setAttribute('role', 'alert'); line.textContent = message;
   $('actions').appendChild(line);
 }
+function acceptRoom(data) {
+  if (state && (data.gameRevision || 0) < revision) return;
+  if (!data.players?.[uid]) {
+    connected = false;
+    banner.textContent = 'Tu ne fais pas partie de ce salon. Rejoins-le depuis la salle d’attente.';
+    return;
+  }
+  room = data;
+  if (!data.gameState) {
+    banner.textContent = data.status === 'playing' ? 'Préparation du plateau…' : 'En attente du lancement dans le salon…';
+    if (connected && data.status === 'playing') initialize();
+    return;
+  }
+  const nextRevision = data.gameRevision || 0;
+  if (nextRevision > revision || !state) {
+    inspection = null; modalHidden = false; lastError = null;
+    if (!state) lastAnimation = data.gameState.animation?.id || null;
+    revision = nextRevision; state = normalizeGame(data.gameState, data);
+    render();
+  }
+}
+function setConnection(value) {
+  if (connected === value) return;
+  connected = value;
+  if (state) render();
+}
+async function restRequest(url, options = {}) {
+  const token = await auth.currentUser.getIdToken();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 6500);
+  try {
+    const response = await fetch(url, {
+      ...options, cache: 'no-store', signal: controller.signal,
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      const error = Error(result.error?.message || 'Connexion au salon interrompue.');
+      error.status = response.status; error.code = result.error?.status;
+      throw error;
+    }
+    return decodeDocument(result);
+  } catch (error) {
+    if (error.name === 'AbortError') throw Error('Le réseau tarde à répondre. Reconnexion au salon…');
+    throw error;
+  } finally { clearTimeout(timer); }
+}
+function refreshRoom() {
+  if (!client || !navigator.onLine || document.hidden) return;
+  return client.refresh().catch(error => {
+    if (!state) showError(error);
+  });
+}
 async function connect() {
   try {
-    const auth = getAuth(initializeApp(firebaseConfig));
-    db = getFirestore(auth.app);
+    auth = getAuth(initializeApp(firebaseConfig));
+    // Close each response promptly on mobile networks that buffer streaming traffic.
+    db = initializeFirestore(auth.app, {
+      experimentalForceLongPolling: true,
+      experimentalLongPollingOptions: { timeoutSeconds: 5 }
+    });
     await signInAnonymously(auth); uid = auth.currentUser.uid; ref = doc(db, 'rooms', roomId);
+    const endpoint = 'https://firestore.googleapis.com/v1/projects/' + firebaseConfig.projectId +
+      '/databases/(default)/documents/rooms/' + encodeURIComponent(roomId);
+    client = createRoomClient({
+      readRoom: () => restRequest(endpoint),
+      writeRoom: (base, next, nextRevision) => {
+        const query = new URLSearchParams([
+          ['updateMask.fieldPaths', 'gameState'], ['updateMask.fieldPaths', 'gameRevision'],
+          ['currentDocument.updateTime', base.updateTime]
+        ]);
+        return restRequest(endpoint + '?' + query, {
+          method: 'PATCH',
+          body: JSON.stringify({ fields: { gameState: encodeValue(next), gameRevision: encodeValue(nextRevision) } })
+        });
+      },
+      onRoom: acceptRoom,
+      onConnection: setConnection
+    });
     onSnapshot(ref, { includeMetadataChanges: true }, snapshot => {
       if (!snapshot.exists()) { banner.textContent = 'Salon introuvable.'; return; }
-      room = snapshot.data();
-      if (!room.players?.[uid]) { banner.textContent = 'Tu ne fais pas partie de ce salon. Rejoins-le depuis la salle d’attente.'; return; }
-      connected = !snapshot.metadata.fromCache && navigator.onLine;
-
-      if (!room.gameState) {
-        banner.textContent = room.status === 'playing' ? 'Préparation du plateau…' : 'En attente du lancement dans le salon…';
-        if (connected && room.status === 'playing') initialize();
-        return;
-      }
-      if (snapshot.metadata.hasPendingWrites) return;
-      const nextRevision = room.gameRevision || 0;
-      if (nextRevision >= revision) {
-        if (nextRevision > revision) { inspection = null; modalHidden = false; }
-        revision = nextRevision; state = normalizeGame(room.gameState, room);
-        render();
-      }
-    }, showError);
+      if (snapshot.metadata.hasPendingWrites || snapshot.metadata.fromCache) return;
+      setConnection(true); acceptRoom(snapshot.data());
+    }, () => { refreshRoom(); });
+    await refreshRoom();
+    // Independent of the streaming channel: recover buffered updates within a short interval.
+    setInterval(() => { if (!state?.gameOver && !busy) refreshRoom(); }, 2000);
   } catch (error) { showError(error); }
 }
 async function initialize() {
@@ -94,16 +165,9 @@ async function send(type, payload = {}) {
   const now = Date.now();
   busy = true; lastError = null; inspection = null; modalHidden = false; render();
   try {
-    await runTransaction(db, async tx => {
-      const snap = await tx.get(ref);
-      if (!snap.exists()) throw Error('Salon introuvable.');
-      const data = snap.data(), shared = normalizeGame(data.gameState, data);
-      if (shared.lastActionId === action.id) return;
-      if ((data.gameRevision || 0) !== expectedRevision) throw Error('La partie a avancé. Consulte le plateau actualisé avant de rejouer.');
-      if (data.status !== 'playing') throw Error('La partie est fermée.');
+    await client.publish(action, expectedRevision, data => {
       let cursor = 0;
-      const next = reduceGame(shared, uid, action, () => tape[cursor++ % tape.length], now);
-      tx.update(ref, { gameState: next, gameRevision: expectedRevision + 1 });
+      return reduceGame(normalizeGame(data.gameState, data), uid, action, () => tape[cursor++ % tape.length], now);
     });
   } catch (error) { showError(error); }
   finally { busy = false; render(); }
@@ -214,7 +278,8 @@ function renderDeal() {
 }
 function render() {
   if (!state) return;
-  window.onlineView(state);
+  $('game').dataset.revision = String(revision);
+  if (renderedState !== state) { window.onlineView(state); renderedState = state; }
   const me = myIndex(), name = state.players[me]?.name || '';
   banner.textContent = (!connected ? '⏳ Reconnexion… · ' : '🌐 ') + roomId + ' · Tu es ' + name + ' · ' +
     (state.gameOver ? 'Partie terminée' : state.players[actor(state)].name + (actor(state) === me ? ' · À toi de jouer' : ' joue'));
@@ -240,8 +305,11 @@ function render() {
       if (confirm('Abandonner cette partie ? Tes propriétés seront libérées.')) send('quit');
     }, dock, connected && !busy);
   } else button('Quitter le plateau', () => { localStorage.removeItem('brokeSalon'); location.href = './salon.html'; }, dock, true);
-  history.replaceChildren();
-  state.logs.forEach(text => { const line = document.createElement('div'); line.textContent = text; history.appendChild(line); });
+  if (renderedLogs !== state.logs) {
+    history.replaceChildren();
+    state.logs.forEach(text => { const line = document.createElement('div'); line.textContent = text; history.appendChild(line); });
+    renderedLogs = state.logs;
+  }
   if (busy) {
     $('actions').querySelectorAll('button').forEach(b => { b.disabled = true; });
     banner.textContent = '⏳ Enregistrement de ton action…';
@@ -254,18 +322,19 @@ function render() {
 }
 function showDice() {
   const animation = state.animation;
-  if (!animation || animation.id === lastAnimation || Date.now() - animation.at > 8000) return;
+  if (!animation || animation.id === lastAnimation) return;
   lastAnimation = animation.id;
   clearTimeout(animationTimer);
   const stage = $('dice-stage'), cube = $('dice-cube');
-  stage.classList.remove('hidden'); cube.classList.add('rolling');
+  stage.classList.remove('hidden', 'settled'); cube.classList.add('rolling');
+  cube.querySelector('.online-die').textContent = animation.roll;
   $('dice-result').textContent = state.players[animation.player].name + ' lance le dé…';
   animationTimer = setTimeout(() => {
     cube.classList.remove('rolling'); stage.classList.add('settled');
-    cube.querySelector('.dice-face').textContent = animation.roll;
+    cube.querySelector('.online-die').textContent = animation.roll;
     $('dice-result').textContent = '🎲 Résultat · ' + animation.roll;
-    animationTimer = setTimeout(() => stage.classList.add('hidden'), 1300);
-  }, 650);
+    animationTimer = setTimeout(() => { stage.classList.add('hidden'); $('dice-result').textContent = ''; }, 650);
+  }, 350);
 }
 let timeoutPending = false;
 function updateClock() {

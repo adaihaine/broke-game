@@ -2,7 +2,21 @@
 
 Jeu local dans `index.html`, salons privés à 2–4 joueurs dans `salon.html`.
 
-## Tester sur téléphone
+## Jouer sur téléphone
+
+La version publiée est disponible sur
+https://adaihaine.github.io/broke-game/salon.html?v=20261123-2
+et fonctionne sur des réseaux différents.
+
+Le plateau utilise le flux Firestore avec réponses courtes pour les réseaux mobiles.
+Une lecture directe toutes les deux secondes au premier plan récupère les mises à jour
+si le flux est suspendu ou retardé. Les actions sont écrites avec une précondition sur
+la version du document, et leur confirmation met immédiatement l'écran à jour.
+Une réponse perdue est vérifiée par identifiant avant toute nouvelle tentative.
+Les cellules du plateau sont conservées entre les tours pour éviter les reconstructions
+et les couches 3D du dé ont été remplacées dans le mode en ligne.
+
+## Tester sur le Wi-Fi local
 
 Depuis ce dossier, lancer `python3 serve.py`, puis ouvrir
 `http://ADRESSE_WIFI_DU_MAC:8766/salon.html` sur chaque téléphone du même Wi-Fi.

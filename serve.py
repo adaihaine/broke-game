@@ -5,7 +5,7 @@ import argparse
 
 PUBLIC = {
     "index.html", "salon.html", "salon-v2.html", "online-game.html",
-    "firebase-config.js", "online-board.js", "online-engine.js", "online.js"
+    "firebase-config.js", "online-board.js", "online-engine.js", "online.js", "online-sync.js", "online.css"
 }
 ROOT = Path(__file__).resolve().parent
 

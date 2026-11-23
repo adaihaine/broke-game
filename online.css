@@ -1,0 +1,101 @@
+/* Mobile layout and paint containment for the shared board. */
+.online-room { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+.online-room #board {
+  container-type: inline-size;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  grid-template-rows: repeat(9, minmax(0, 1fr));
+  aspect-ratio: 1;
+  min-height: 0;
+  overflow: hidden;
+  isolation: isolate;
+  gap: clamp(2px, .5vw, 4px);
+  padding: clamp(3px, .6vw, 5px);
+}
+.online-room #board > .cell {
+  min-width: 0;
+  min-height: 0;
+  padding: 1px;
+  overflow: hidden;
+  contain: paint;
+  border-top-width: clamp(3px, .65vw, 8px);
+}
+.online-room .cell > .name {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 3.15em;
+  overflow: hidden;
+  font-size: clamp(5px, 1.7cqw, 13px);
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+.online-room .cell > .price,
+.online-room .cell > .cost {
+  flex: 0 0 auto;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: clamp(5px, 1.45cqw, 11px);
+  line-height: 1.1;
+}
+.online-room .cell.special > .name {
+  font-size: clamp(6px, 1.8cqw, 15px);
+  line-height: 1.1;
+}
+.online-room .cell.special > .name::first-line { font-size: inherit; }
+.online-room .cell .loot-amount { font-size: clamp(7px, 2cqw, 18px); }
+.online-room .tokens { bottom: 1px; left: 1px; gap: 1px; }
+.online-room .token { width: clamp(6px, 1.6cqw, 13px); height: clamp(6px, 1.6cqw, 13px); flex-shrink: 0; }
+.online-room .center {
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  contain: layout paint;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  gap: 4px;
+  padding: clamp(6px, 1.8cqw, 18px);
+}
+.online-room .brand-top,
+.online-room #turnname,
+.online-room #timerlabel,
+.online-room #move-progress,
+.online-room #message,
+.online-room #actions {
+  position: static;
+  inset: auto;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+.online-room .brand-top { flex: 0 0 auto; width: 100%; }
+.online-room .center .logo { font-size: clamp(34px, 12cqw, 112px) !important; }
+.online-room #turnname { flex: 0 0 auto; font-size: clamp(14px, 4cqw, 36px); }
+.online-room #message { min-height: 0; font-size: clamp(11px, 2.7cqw, 22px); overflow-wrap: anywhere; }
+.online-room #actions { flex: 0 1 auto; max-height: 32%; overflow: auto; align-items: center; }
+.online-room #actions p { margin: 0; overflow-wrap: anywhere; font-size: clamp(11px, 2.7cqw, 21px); }
+.online-room #actions button { font-size: clamp(12px, 2.8cqw, 22px); padding: clamp(9px, 2cqw, 18px); }
+.online-room #actions:empty,
+.online-room #timerlabel:empty,
+.online-room #move-progress:empty { display: none; }
+.online-room .property-dock { gap: 8px; padding: 18px 6px; }
+.online-room .property-dock button { flex: 1; width: auto; min-width: 0; padding: 13px 6px; }
+.online-room #dice-stage { contain: layout paint; perspective: none; }
+.online-room #dice-stage.hidden { display: none !important; visibility: hidden; }
+.online-room #dice-cube { transform-style: flat; filter: none; width: 64px; height: 64px; }
+.online-room #dice-cube.rolling { animation: online-dice-shake .35s ease-out; }
+.online-room .online-die {
+  display: grid; place-items: center; width: 64px; height: 64px;
+  border-radius: 12px; border: 2px solid #c5cbd5; background: #fff;
+  color: #182035; font-size: 44px; font-weight: 900;
+}
+.online-room #dice-result { left: 4%; right: 4%; text-align: center; font-size: 14px; }
+@keyframes online-dice-shake {
+  0% { transform: translate(-18px, -12px) rotate(-35deg); }
+  45% { transform: translate(12px, 6px) rotate(25deg); }
+  100% { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .online-room #dice-cube.rolling { animation: none; }
+}
