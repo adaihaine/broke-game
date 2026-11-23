@@ -79,8 +79,6 @@
 .online-room #actions:empty,
 .online-room #timerlabel:empty,
 .online-room #move-progress:empty { display: none; }
-.online-room .property-dock { gap: 8px; padding: 18px 6px; }
-.online-room .property-dock button { flex: 1; width: auto; min-width: 0; padding: 13px 6px; }
 .online-room #dice-stage { contain: layout paint; perspective: none; }
 .online-room #dice-stage.hidden { display: none !important; visibility: hidden; }
 .online-room #dice-cube { transform-style: flat; filter: none; width: 64px; height: 64px; }
@@ -99,3 +97,94 @@
 @media (prefers-reduced-motion: reduce) {
   .online-room #dice-cube.rolling { animation: none; }
 }
+
+/* Keep each board control in its own row. */
+.online-room #peekreturn:not(.hidden) {
+  position: static !important;
+  transform: none !important;
+  width: calc(100% - 12px);
+  max-width: none;
+  min-width: 0;
+  min-height: 44px;
+  margin: 8px 6px 0 !important;
+  white-space: normal;
+}
+.online-room .property-dock {
+  align-items: stretch;
+  gap: 8px;
+  min-height: 0;
+  padding: 8px 6px 12px;
+}
+.online-room .property-dock button {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+  padding: 13px 6px;
+  overflow-wrap: anywhere;
+}
+
+.online-room #board {
+  grid-template-rows: repeat(9, minmax(43px, 1fr));
+  width: 100%;
+  min-height: 415px;
+}
+.online-room #board > .cell > .name { max-height: none; flex-shrink: 0; }
+.online-room .cell-markers:not(:has(.owner, .token)) { display: none; }
+.online-room .cell-markers {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  max-width: 100%;
+  flex: none;
+}
+.online-room .cell-markers .owner,
+.online-room .cell-markers .tokens { position: static; }
+.online-room .cell-markers .owner { font-size: clamp(5px, 1.45cqw, 11px); line-height: 1; }
+.online-room .cell-markers .token {
+  width: clamp(4px, 1.25cqw, 11px);
+  height: clamp(4px, 1.25cqw, 11px);
+}
+.online-room .center { overflow: auto; }
+.online-room #turnname { overflow-wrap: anywhere; }
+.online-room #dice-stage {
+  position: static;
+  gap: 12px;
+  min-height: 92px;
+  margin-top: 8px;
+  padding: 12px;
+}
+.online-room #dice-cube { flex: none; }
+.online-room #dice-result { position: static; overflow-wrap: anywhere; }
+.online-room #online-banner { position: static !important; overflow-wrap: anywhere; }
+
+.online-room .modalwrap { background: #10131b; }
+.online-room .modal {
+  max-height: 85dvh;
+  overflow-wrap: anywhere;
+  overscroll-behavior: contain;
+}
+.online-room .modal input,
+.online-room .modal select { display: block; width: 100%; min-width: 0; margin: 4px 0 12px; }
+.online-room .modal #modalactions {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 115px), 1fr));
+}
+.online-property-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 110px), 1fr));
+  gap: 8px;
+}
+.online-room .online-property-tile {
+  min-height: 100px;
+  gap: 4px;
+  padding: 8px;
+  border-radius: 8px;
+}
+.online-room .online-property-tile > .name {
+  max-height: none;
+  flex: none;
+  font-size: 14px;
+  line-height: 1.2;
+}
+.online-room .online-property-tile > .price,
+.online-room .online-property-tile > .cost { font-size: 13px; }

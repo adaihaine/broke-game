@@ -12,10 +12,12 @@ const money = n => Math.round(n).toLocaleString('fr-FR') + ' €';
 const escape = text => String(text).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 let state, room, uid, db, ref, revision = -1, busy = false, connected = false, lastError = null;
 let client, auth, renderedState = null, renderedLogs = null;
-let initialization = false, inspection = null, modalHidden = false, lastAnimation = null, animationTimer = null;
+let decisionDraft = [];
+let initialization = false, inspection = null, propertiesOpen = false, modalHidden = false, lastAnimation = null, animationTimer = null;
 const banner = document.createElement('div');
 banner.id = 'online-banner';
 banner.style.cssText = 'position:sticky;top:0;z-index:100;background:#183f35;color:white;padding:10px 14px;font-size:13px;text-align:center';
+const negotiationTypes = new Set(['deal', 'offer-response', 'exchange-response', 'exchange-pick']);
 const history = document.createElement('div');
 history.className = 'log'; history.id = 'online-history';
 if (roomId) {
@@ -26,13 +28,13 @@ if (roomId) {
   $('dice-cube').replaceChildren();
   const die = document.createElement('div'); die.className = 'online-die';
   $('dice-cube').appendChild(die);
-  document.querySelector('.center').appendChild($('dice-stage'));
+  $('board').after($('dice-stage'), $('peekreturn'));
   banner.textContent = 'Connexion au salon ' + roomId + '…';
   $('restart').onclick = () => { location.href = './salon.html'; };
   // Keep local board-peeking controls while shared decisions stay serialized.
   $('peekreturn').onclick = () => { modalHidden = false; render(); };
   $('dealpeek').onclick = () => { modalHidden = true; render(); };
-  window.onlineInspect = i => { inspection = i; modalHidden = false; render(); };
+  window.onlineInspect = i => { inspection = i; propertiesOpen = false; render(); };
   window.addEventListener('offline', () => { connected = false; render(); });
   window.addEventListener('online', () => { banner.textContent = 'Reconnexion au salon…'; refreshRoom(); });
   document.addEventListener('visibilitychange', () => {
@@ -67,7 +69,7 @@ function acceptRoom(data) {
   }
   const nextRevision = data.gameRevision || 0;
   if (nextRevision > revision || !state) {
-    inspection = null; modalHidden = false; lastError = null;
+    inspection = null; propertiesOpen = false; modalHidden = false; decisionDraft = []; lastError = null;
     if (!state) lastAnimation = data.gameState.animation?.id || null;
     revision = nextRevision; state = normalizeGame(data.gameState, data);
     render();
@@ -163,7 +165,7 @@ async function send(type, payload = {}) {
   // Reuse the same random tape across Firestore retries.
   const tape = Array.from(crypto.getRandomValues(new Uint32Array(16)), n => n / 4294967296);
   const now = Date.now();
-  busy = true; lastError = null; inspection = null; modalHidden = false; render();
+  busy = true; lastError = null; inspection = null; propertiesOpen = false; modalHidden = false; decisionDraft = []; render();
   try {
     await client.publish(action, expectedRevision, data => {
       let cursor = 0;
@@ -182,11 +184,16 @@ function act(label, type, payload, parent) { return button(label, () => send(typ
 function modal(title, body) {
   const el = $('modal'); el.className = 'modal';
   el.innerHTML = '<h2>' + escape(title) + '</h2><div>' + body + '</div><div class="actions" id="modalactions"></div>';
-  $('modalwrap').classList.toggle('hidden', modalHidden);
-  $('peekreturn').classList.toggle('hidden', !modalHidden);
-  $('dealpeek').classList.add('hidden');
-  const peek = document.createElement('button'); peek.textContent = '👀 Voir le plateau'; peek.className = 'view-board-btn';
-  peek.onclick = () => { modalHidden = true; render(); }; el.appendChild(peek);
+  $('modalwrap').classList.remove('hidden');
+  $('peekreturn').classList.add('hidden');
+  if (!propertiesOpen && inspection === null) {
+    button('👀 Voir le plateau', () => {
+      decisionDraft = Array.from(el.querySelectorAll('input, select'), field => [field.id, field.value]);
+      modalHidden = true;
+      render();
+      $('peekreturn').focus();
+    }, el, true).className = 'view-board-btn';
+  }
   return $('modalactions');
 }
 function chooseProperty(title, ids, type, extra = {}) {
@@ -205,7 +212,35 @@ function inspectProperty(i) {
     if (state.phase !== 'debt' && complete(state, i) && prop.level < 3 && state.players[myIndex()].cash >= upgradeCost(i))
       act('Améliorer · ' + money(upgradeCost(i)), 'upgrade', { cell: i }, actions);
   }
-  button('Fermer', () => { inspection = null; modalHidden = false; render(); }, actions, true);
+  button(propertiesOpen ? 'Retour à mes propriétés' : 'Fermer', () => {
+    inspection = null;
+    render();
+  }, actions, true);
+}
+function renderProperties(index) {
+  const ids = myProperties(index);
+  const actions = modal('Mes propriétés', ids.length ? '' : '<p>Tu ne possèdes aucune propriété.</p>');
+  if (ids.length) {
+    const grid = document.createElement('div');
+    grid.className = 'online-property-grid';
+    actions.before(grid);
+    for (const i of ids) {
+      const tile = button('', () => { inspection = i; render(); }, grid, true);
+      tile.className = 'cell online-property-tile';
+      tile.style.setProperty('--family', window.onlineFamilyColor(board[i].type));
+      for (const [className, label] of [
+        ['name', board[i].name],
+        ['price', money(board[i].price)],
+        ['cost', 'Loyer ' + money(rent(state, i))]
+      ]) {
+        const line = document.createElement('span');
+        line.className = className;
+        line.textContent = label;
+        tile.appendChild(line);
+      }
+    }
+  }
+  button('Fermer', () => { propertiesOpen = false; render(); }, actions, true);
 }
 function renderDecision() {
   const pending = state.pending, actions = $('actions'), p = state.players[state.current];
@@ -223,6 +258,12 @@ function renderDecision() {
     }[pending.type] || 'décision');
     actions.appendChild(text); return;
   }
+  if (modalHidden && inspection === null && !propertiesOpen) {
+    const resume = $('peekreturn');
+    resume.textContent = negotiationTypes.has(pending.type) ? '↩ Revenir à la négociation' : '↩ Revenir à la décision';
+    resume.classList.remove('hidden');
+  }
+  if (modalHidden || inspection !== null || propertiesOpen) return;
   let target;
   switch (pending.type) {
     case 'purchase':
@@ -291,15 +332,18 @@ function render() {
     button('Retour au salon', () => { localStorage.removeItem('brokeSalon'); location.href = './salon.html'; }, $('actions'), true);
   } else {
     renderDecision();
-    if (inspection !== null) inspectProperty(inspection);
+  }
+  if (inspection !== null) inspectProperty(inspection);
+  else if (propertiesOpen) renderProperties(me);
+  else if (!$('modalwrap').classList.contains('hidden')) {
+    for (const [id, value] of decisionDraft) $(id).value = value;
   }
   const dock = $('propertytools');
   if (!state.players[me]?.bankrupt) {
     button('🏛 Mes propriétés', () => {
-      const ids = myProperties(me);
-      const target = modal('Mes propriétés', ids.length ? '' : '<p>Tu ne possèdes aucune propriété.</p>');
-      ids.forEach(i => button(board[i].name, () => { inspection = i; render(); }, target, true));
-      button('Fermer', () => { inspection = null; render(); }, target, true);
+      inspection = null;
+      propertiesOpen = true;
+      render();
     }, dock, true);
     if (!state.gameOver) button('🚪 Abandonner', () => {
       if (confirm('Abandonner cette partie ? Tes propriétés seront libérées.')) send('quit');
